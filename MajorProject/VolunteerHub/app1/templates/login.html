@@ -1,0 +1,133 @@
+{% load static %}
+<html>
+<head>
+    <title>Login | VolunteerHub</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<div class="auth-container">
+
+    <!-- LEFT PANEL -->
+    <div class="auth-left">
+        <h1>Welcome Back!</h1>
+        <p>
+            Sign in to access your dashboard and continue making
+            a difference in your community.
+        </p>
+
+        <div class="features">
+            ✔ AI-powered fair volunteer selection<br>
+            ✔ Track participation & growth<br>
+            ✔ Community impact
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="auth-right">
+        <div class="auth-card">
+
+            <!-- ROLE TABS -->
+            <div class="tabs">
+                <div class="tab volunteer active" data-role="VOLUNTEER">
+                    <span class="icon">👤</span> Volunteer
+                </div>
+                <div class="tab organization" data-role="ORGANIZATION">
+                    <span class="icon">🏢</span> Organization
+                </div>
+                <div class="tab admin" data-role="ADMIN">
+                    <span class="icon">🛡️</span> Admin
+                </div>
+            </div>
+
+            <h2 id="loginTitle">Volunteer Login</h2>
+
+            <!-- LOGIN FORM -->
+            <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
+
+            <form id="loginForm">
+
+                <input id="username" placeholder="Email address" required>
+
+                <div class="password-box">
+                    <input id="password" type="password" placeholder="Password" required>
+                    <span onclick="togglePassword()">👁️</span>
+                </div>
+
+                <button type="submit">Sign In</button>
+                <div id="loginError" class="error-message"></div>
+            </form>
+
+            <div class="switch-text">
+                Don't have an account?
+                <a href="/register/">Register here</a>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+let selectedRole = "VOLUNTEER";
+
+document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        selectedRole = tab.dataset.role;
+    });
+});
+
+document.getElementById("loginForm").onsubmit = async function(e) {
+    e.preventDefault();
+
+    const errorBox = document.getElementById("loginError");
+    errorBox.style.display = "none";
+
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    try {
+        const res = await fetch("/api/login/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.getElementById("csrfToken").value
+            },
+            body: JSON.stringify({
+                username: usernameInput.value,
+                password: passwordInput.value,
+                role: selectedRole
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.status === "success") {
+            if (data.role === "VOLUNTEER")
+                window.location.href = "/volunteer/dashboard/";
+            else if (data.role === "ORGANIZATION")
+                window.location.href = "/organization/dashboard/";
+            else
+                window.location.href = "/admin-panel/dashboard/";
+        } else {
+            errorBox.innerText = `${selectedRole} login failed`;
+            errorBox.style.display = "block";
+
+            setTimeout(() => {
+                errorBox.style.display = "none";
+            }, 3000);
+        }
+    } catch (err) {
+        errorBox.innerText = "Server error. Try again.";
+        errorBox.style.display = "block";
+    }
+};
+</script>
+
+
+
+</body>
+</html>

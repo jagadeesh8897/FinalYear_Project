@@ -1,0 +1,85 @@
+{% extends "base_volunteer.html" %}
+
+{% block content %}
+
+<h1 class="welcome">
+    Welcome, {{ profile.full_name }}! 👋
+</h1>
+<p class="subtitle">
+    Track your volunteer journey and discover new opportunities
+</p>
+
+<!-- STATS -->
+<div class="stats">
+
+    <div class="stat-card green">
+        <div class="icon">✔</div>
+        <h2>{{ completed }}</h2>
+        <p>Completed Services</p>
+        <small>Start volunteering!</small>
+    </div>
+
+    <div class="stat-card blue">
+        <div class="icon">📅</div>
+        <h2>N/A</h2>
+        <p>Attendance Rate</p>
+    </div>
+
+    <div class="stat-card yellow">
+        <div class="icon">⭐</div>
+        <h2>{{ request.user.volunteerprofile.rating|default:"N/A" }}</h2>
+        <p>Average Rating</p>
+        <small>Complete services to get rated</small>
+    </div>
+
+    <div class="stat-card cyan">
+        <div class="icon">⏱</div>
+        <h2>{{ assigned }}</h2>
+        <p>Upcoming Services</p>
+        <small>Apply for services</small>
+    </div>
+
+</div>
+
+<!-- LOWER GRID -->
+<div class="lower-grid">
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Your Upcoming Services</h3>
+            <a href="#">View All →</a>
+        </div>
+
+        <div class="empty-box">
+            📋
+            <p>No upcoming services</p>
+            <span>Apply for services to get started!</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Your Progress</h3>
+
+        <p class="goal">
+            Service Goal <b>{{ completed }}/10</b> completed
+        </p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ completed }}0%;"></div>
+        </div>
+
+        <div class="mini-stats">
+            <div>
+                <h2>0</h2>
+                <p>Applied</p>
+            </div>
+            <div>
+                <h2>0</h2>
+                <p>Selected</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

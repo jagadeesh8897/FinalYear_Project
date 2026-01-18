@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Volunteer Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/volunteer_dashboard.css' %}">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <div class="logo-icon">V</div>
+            <span>VolunteerHub</span>
+        </div>
+
+        <div class="profile-box">
+            <div>
+                <h4>👤 {{ request.user.username }}</h4>
+                <p >    Volunteer</p>
+            </div>
+        </div>
+
+        <nav class="menu">
+            <a class="active" href="/volunteer/dashboard/">Dashboard</a>
+            <a href="/volunteer/services/">Available Services</a>
+            <a href="/volunteer/applications/">My Applications</a>
+            <a href="/volunteer/attendance/">My Attendance</a>
+            <a href="/volunteer/profile/">Profile</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="/">← Back to Home</a>
+            <a class="logout" href="/">⎋ Logout</a>
+        </div>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <h2>Volunteer Dashboard</h2>
+            <div class="bell">🔔</div>
+        </header>
+
+        <section class="content">
+            {% block content %}
+
+            {% endblock %}
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

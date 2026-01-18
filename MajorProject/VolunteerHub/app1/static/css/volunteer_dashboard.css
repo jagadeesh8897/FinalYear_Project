@@ -1,0 +1,215 @@
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;   /* 🚫 stop full-page scroll */
+}
+
+.app {
+    display: flex;
+    height: 100vh;      /* full screen */
+}
+
+
+.sidebar {
+    width: 260px;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    height: 100vh;      /* 🔒 fixed height */
+    overflow: hidden;  /* no scrolling */
+}
+
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 25px;
+}
+
+.logo-icon {
+    background: #2563eb;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.profile-box {
+    display: flex;
+    gap: 12px;
+    background: #eef2ff;
+    padding: 12px;
+    border-radius: 12px;
+    margin-top:0px;
+    margin-bottom: 2px;
+}
+.profile-box div {
+    line-height: 1.2;       /* 🔥 tighter text */
+    margin-top:-20px;
+}
+.profile-box p {
+    line-height: 1.2;       /* 🔥 tighter text */
+    margin-top:-10px;
+}
+.menu{
+margin-top: 20px;
+
+
+}
+.menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 14px;      /* ⬇ reduced */
+    margin-bottom: 4px;      /* ⬇ reduced */
+
+    border-radius: 10px;
+
+    text-decoration: none;
+    color: #444;
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.menu a.active,
+.menu a:hover {
+    background: #2563eb;
+    color: white;
+    transform: translateX(10px);
+}
+.menu a i {
+    width: 18px;
+    height: 18px;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.sidebar-footer a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 12px;
+    margin-top: 4px;
+
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.logout {
+    color: red;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;     /* 🔒 full height */
+}
+
+
+.topbar {
+    background: white;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e5e7eb;
+    justify-content:space-between;
+    flex-shrink: 0;    /* 🔒 stays fixed */
+}
+
+
+.content {
+    padding: 30px;
+
+    flex: 1;                 /* take remaining height */
+    overflow-y: auto;        /* ✅ vertical scroll only */
+}
+
+
+/* DASHBOARD */
+.welcome {
+    font-size: 28px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.stat-card {
+    padding: 20px;
+    border-radius: 16px;
+    background: white;
+}
+
+.stat-card h2 {
+    margin: 10px 0;
+}
+
+.green { background: #ecfdf5; }
+.blue { background: #eff6ff; }
+.yellow { background: #fff7ed; }
+.cyan { background: #ecfeff; }
+
+.lower-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.empty-box {
+    text-align: center;
+    color: #777;
+    margin-top: 40px;
+}
+
+.progress-bar {
+    background: #e5e7eb;
+    height: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 6px;
+}
+
+.mini-stats {
+    display: flex;
+    gap: 20px;
+}

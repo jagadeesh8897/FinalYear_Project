@@ -1,0 +1,64 @@
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VolunteerHub</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+    <div class="logo">
+        💚 <span>VolunteerHub</span>
+    </div>
+    <nav>
+        <a href="/login/" class="nav-link">Sign In</a>
+        <a href="/register/" class="btn-primary">Get Started</a>
+    </nav>
+</header>
+
+<!-- HERO SECTION -->
+<section class="hero">
+    <span class="badge">✨ AI-Powered Volunteer Management</span>
+
+    <h1>
+        Connect. Serve. <br>
+        <span class="highlight">Transform.</span>
+    </h1>
+
+    <p class="subtitle">
+        An intelligent platform that connects volunteers with organizations,
+        ensuring fair opportunities and efficient service management
+        for your community.
+    </p>
+
+    <div class="hero-buttons">
+        <a href="/register/" class="btn-primary">Start Volunteering →</a>
+        <a href="/login/" class="btn-secondary">Sign In to Dashboard</a>
+    </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+    <div class="stat">
+        <h2>500+</h2>
+        <p>Active Volunteers</p>
+    </div>
+    <div class="stat">
+        <h2>50+</h2>
+        <p>Partner Organizations</p>
+    </div>
+    <div class="stat">
+        <h2>1,200+</h2>
+        <p>Services Completed</p>
+    </div>
+    <div class="stat">
+        <h2>98%</h2>
+        <p>Satisfaction Rate</p>
+    </div>
+</section>
+
+</body>
+</html>

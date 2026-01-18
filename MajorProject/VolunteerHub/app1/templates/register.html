@@ -1,0 +1,206 @@
+{% load static %}
+<html>
+<head>
+    <title>Register | VolunteerHub</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<div class="auth-container">
+
+    <!-- LEFT PANEL -->
+    <div class="auth-left">
+        <h1>Join Our Community</h1>
+        <p>
+            Create an account to start your volunteering journey or
+            register your organization to connect with volunteers.
+        </p>
+
+        <ul class="features">
+            <li>✔ AI-powered fair selection</li>
+            <li>✔ Track participation & growth</li>
+            <li>✔ Community impact</li>
+        </ul>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="auth-right">
+        <div class="auth-card">
+
+            <!-- ROLE SWITCH -->
+            <div class="tabs">
+                <div class="tab volunteer" data-role="VOLUNTEER">👤 Volunteer</div>
+                <div class="tab organization" data-role="ORGANIZATION">🏢 Organization</div>
+            </div>
+
+            <h2 id="registerTitle">Volunteer Registration</h2>
+
+            <!-- DJANGO MESSAGES -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-message"
+                         style="display:block;
+                         {% if message.tags == 'success' %}
+                            background:#dcfce7; color:#166534;
+                         {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="{% url 'register' %}" id="registerForm">
+                {% csrf_token %}
+
+                <!-- ROLE -->
+                <input type="hidden" name="role" id="role"
+                       value="{{ selected_role|default:'VOLUNTEER' }}">
+
+                <input type="hidden" name="skills" id="skillsInput">
+
+                <!-- COMMON -->
+                <input name="full_name"
+                       value="{{ form_data.full_name|default:'' }}"
+                       placeholder="Full Name / Organization Name" required>
+
+                <input name="email"
+                       type="email"
+                       value="{{ form_data.email|default:'' }}"
+                       placeholder="Email address" required>
+
+                <input name="phone"
+                       value="{{ form_data.phone|default:'' }}"
+                       placeholder="Phone number" required>
+
+                <input name="student_id" id="student_id"
+                       value="{{ form_data.student_id|default:'' }}"
+                       placeholder="Student ID">
+
+                <select name="department" id="department">
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="MECH">MECH</option>
+                    <option value="CIVIL">CIVIL</option>
+                </select>
+
+                <!-- VOLUNTEER ONLY -->
+                <select name="year" id="year">
+                    <option value="">Select Year of Study</option>
+                    <option value="1st Year" {% if form_data.year == "1st Year" %}selected{% endif %}>1st Year</option>
+                    <option value="2nd Year" {% if form_data.year == "2nd Year" %}selected{% endif %}>2nd Year</option>
+                    <option value="3rd Year" {% if form_data.year == "3rd Year" %}selected{% endif %}>3rd Year</option>
+                    <option value="4th Year" {% if form_data.year == "4th Year" %}selected{% endif %}>4th Year</option>
+                </select>
+
+                <!-- SKILLS -->
+                <div class="skills" id="skillsBox">
+                    <span onclick="toggleSkill(this)">Teaching</span>
+                    <span onclick="toggleSkill(this)">Event Management</span>
+                    <span onclick="toggleSkill(this)">Technical</span>
+                    <span onclick="toggleSkill(this)">Healthcare</span>
+                    <span onclick="toggleSkill(this)">Environment</span>
+                    <span onclick="toggleSkill(this)">Social Work</span>
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="password-box">
+                    <input name="password" id="password" type="password"
+                           placeholder="Create password" required>
+                    <span onclick="togglePassword()">👁</span>
+                </div>
+
+                <input name="rpassword" type="password"
+                       placeholder="Confirm password" required>
+
+                <button type="submit" id="submitBtn">Create Account</button>
+            </form>
+
+            <p class="switch-text">
+                Already have an account?
+                <a href="/login/">Sign in</a>
+            </p>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+let selectedRole = "{{ selected_role|default:'VOLUNTEER' }}";
+let skills = [];
+
+/* ========================= */
+/* UPDATE UI FUNCTION        */
+/* ========================= */
+function updateUI() {
+    document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.remove("active");
+        if (tab.dataset.role === selectedRole) {
+            tab.classList.add("active");
+        }
+    });
+
+    document.getElementById("role").value = selectedRole;
+    const isVolunteer = selectedRole === "VOLUNTEER";
+
+    // Show/hide fields
+    document.getElementById("year").style.display = isVolunteer ? "block" : "none";
+    document.getElementById("skillsBox").style.display = isVolunteer ? "block" : "none";
+    document.getElementById("department").style.display = isVolunteer ? "block" : "none";
+    document.getElementById("student_id").style.display = isVolunteer ? "block" : "none";
+
+    // Toggle required attributes
+    document.getElementById("year").required = isVolunteer;
+    document.getElementById("department").required = isVolunteer;
+    document.getElementById("student_id").required = isVolunteer;
+
+    // Titles and button text
+    document.getElementById("registerTitle").innerText =
+        isVolunteer ? "Volunteer Registration" : "Organization Registration";
+
+    document.getElementById("submitBtn").innerText =
+        isVolunteer ? "Create Account" : "Submit for Approval";
+}
+
+// Run once on page load
+window.onload = updateUI;
+
+// Tab click
+document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+        selectedRole = tab.dataset.role;
+        updateUI();
+    });
+});
+
+/* AUTO HIDE ERROR */
+setTimeout(() => {
+    document.querySelectorAll(".error-message").forEach(msg => {
+        msg.style.display = "none";
+    });
+}, 3000);
+
+/* SKILLS */
+function toggleSkill(el) {
+    el.classList.toggle("active");
+    const skill = el.innerText;
+    skills.includes(skill)
+        ? skills = skills.filter(s => s !== skill)
+        : skills.push(skill);
+}
+
+/* PASSWORD TOGGLE */
+function togglePassword() {
+    const pwd = document.getElementById("password");
+    pwd.type = pwd.type === "password" ? "text" : "password";
+}
+
+/* BEFORE SUBMIT */
+document.getElementById("registerForm").onsubmit = function () {
+    document.getElementById("skillsInput").value = skills.join(",");
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Organization Dashboard</h2>
+
+<a href="/organization/create-service/">
+    <button>Create New Work</button>
+</a>
+
+<ul>
+{% for s in services %}
+    <li>{{ s.title }} — {{ s.status }}</li>
+{% empty %}
+    <li>No services created yet</li>
+{% endfor %}
+</ul>
+
+{% endblock %}
