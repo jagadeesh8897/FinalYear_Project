@@ -23,14 +23,35 @@
                 <p >    Volunteer</p>
             </div>
         </div>
+<nav class="menu">
 
-        <nav class="menu">
-            <a class="active" href="/volunteer/dashboard/">Dashboard</a>
-            <a href="/volunteer/services/">Available Services</a>
-            <a href="/volunteer/applications/">My Applications</a>
-            <a href="/volunteer/attendance/">My Attendance</a>
-            <a href="/volunteer/profile/">Profile</a>
-        </nav>
+    <a href="/volunteer/dashboard/"
+       class="{% if active_page == 'dashboard' %}active{% endif %}">
+        Dashboard
+    </a>
+
+    <a href="{% url 'volunteer_services' %}"
+       class="{% if active_page == 'services' %}active{% endif %}">
+        Available Services
+    </a>
+
+    <a href="/volunteer/applications/"
+       class="{% if active_page == 'applications' %}active{% endif %}">
+        My Applications
+    </a>
+
+    <a href="/volunteer/attendance/"
+       class="{% if active_page == 'attendance' %}active{% endif %}">
+        My Attendance
+    </a>
+
+    <a href="{% url 'volunteer_profile' %}"
+       class="{% if active_page == 'profile' %}active{% endif %}">
+        Profile
+    </a>
+
+</nav>
+
 
         <div class="sidebar-footer">
             <a href="/">← Back to Home</a>

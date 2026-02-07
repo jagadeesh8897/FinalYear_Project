@@ -1,248 +1,652 @@
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import VolunteerProfile, Application, Service
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404 , redirect
 from django.contrib import messages
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from app1.models import Service
+from datetime import date
+from django.utils.timezone import now
+from .models import Organization, Service
 
+from datetime import datetime, date, timedelta
+
+from .models import Service, Application
+
+import json
+import re
+
+from .models import (
+    VolunteerProfile,
+    Organization,
+    Service,
+    Application
+)
+
+User = get_user_model()
+
+# ==================== AUTH ====================
 
 @csrf_exempt
 def login_page(request):
-    return render(request, 'login.html')
+    return render(request, "login.html")
 
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import get_user_model
-from .models import VolunteerProfile, Organization
-import json
-
-User = get_user_model()
 
 @csrf_exempt
 def login_api(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
 
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
-
+    data = json.loads(request.body)
     email = data.get("username")
     password = data.get("password")
     role = data.get("role")
 
-    # 1️⃣ Email exists check
     user = User.objects.filter(email=email).first()
     if not user:
-        return JsonResponse({
-            "status": "error",
-            "message": "Email not registered"
-        })
+        return JsonResponse({"status": "error", "message": "Email not registered"})
 
-    # 2️⃣ ROLE VALIDATION
+    # ROLE VALIDATION
     if role == "VOLUNTEER":
-        if not email.endswith("@srit.ac.in"):
-            return JsonResponse({
-                "status": "error",
-                "message": "Volunteer email must end with @srit.ac.in"
-            })
-
-        if user.role != "VOLUNTEER":
-            return JsonResponse({
-                "status": "error",
-                "message": "Not a volunteer account"
-            })
-
+        if not email.endswith("@srit.ac.in") or user.role != "VOLUNTEER":
+            return JsonResponse({"status": "error", "message": "Invalid volunteer account"})
         if not VolunteerProfile.objects.filter(user=user).exists():
-            return JsonResponse({
-                "status": "error",
-                "message": "Volunteer profile not found"
-            })
+            return JsonResponse({"status": "error", "message": "Volunteer profile missing"})
 
     elif role == "ORGANIZATION":
-        if not email.endswith("@gmail.com"):
-            return JsonResponse({
-                "status": "error",
-                "message": "Organization email must end with @gmail.com"
-            })
-
-        if user.role != "ORGANIZATION":
-            return JsonResponse({
-                "status": "error",
-                "message": "Not an organization account"
-            })
-
+        if not email.endswith("@gmail.com") or user.role != "ORGANIZATION":
+            return JsonResponse({"status": "error", "message": "Invalid organization account"})
         org = Organization.objects.filter(user=user).first()
         if not org or not org.approved:
-            return JsonResponse({
-                "status": "error",
-                "message": "Organization not approved by admin"
-            })
+            return JsonResponse({"status": "error", "message": "Organization not approved by admin"})
 
     elif role == "ADMIN":
         if user.role != "ADMIN":
-            return JsonResponse({
-                "status": "error",
-                "message": "Not an admin account"
-            })
+            return JsonResponse({"status": "error", "message": "Not an admin account"})
 
     else:
-        return JsonResponse({
-            "status": "error",
-            "message": "Invalid role selected"
-        })
+        return JsonResponse({"status": "error", "message": "Invalid role"})
 
-    # 3️⃣ AUTHENTICATION
-    user = authenticate(
-        request,
-        username=user.username,  # Django auth uses username
-        password=password
+    user = authenticate(request, username=user.username, password=password)
+    if not user:
+        return JsonResponse({"status": "error", "message": "Invalid password"})
+
+    login(request, user)
+    return JsonResponse({"status": "success", "role": user.role})
+
+
+# ==================== HOME ====================
+
+def home(request):
+    return render(request, "home.html")
+
+
+# ==================== DASHBOARDS ====================
+
+
+
+from django.utils.timezone import now
+@login_required
+def volunteer_dashboard_page(request):
+    if request.user.role != "VOLUNTEER":
+        return redirect("login")
+
+    profile, created = VolunteerProfile.objects.get_or_create(
+        user=request.user,
+        defaults={
+            "full_name": request.user.email.split("@")[0],
+            "phone": "",
+            "student_id": "",
+            "department": "",
+            "year": "",
+            "skills": ""
+        }
     )
 
-    if not user:
-        return JsonResponse({
-            "status": "error",
-            "message": "Invalid password"
-        })
+    today = now().date()
 
-    # 4️⃣ LOGIN
-    login(request, user)
+    # 🔢 COUNTS (THIS IS THE FIX)
+    applied = Application.objects.filter(
+        volunteer=profile,
+        status="APPLIED"
+    ).count()
 
-    return JsonResponse({
-        "status": "success",
-        "role": user.role
-    })
-
-
-
-@login_required
-
-def volunteer_dashboard(request):
-    if request.user.role != 'VOLUNTEER':
-        return redirect('login')
-
-    profile = VolunteerProfile.objects.get(user=request.user)
-
-    assigned = Application.objects.filter(
-        volunteer=profile, status='SELECTED'
+    selected = Application.objects.filter(
+        volunteer=profile,
+        status="SELECTED"
     ).count()
 
     completed = Application.objects.filter(
-        volunteer=profile, status='COMPLETED'
+        volunteer=profile,
+        status="COMPLETED"
     ).count()
 
-    attendance = 0
-    if profile.completed_services > 0:
-        attendance = int((completed / profile.completed_services) * 100)
+    # 🎯 GOAL
+    goal = 10
 
-    return render(request, 'volunteer/dashboard.html', {
-        'assigned': assigned,
-        'completed': completed,
-        'attendance': attendance,
-        'user': request.user,
-        'profile': profile,
-    })
+    # 📅 UPCOMING SERVICES
+    upcoming_services = Service.objects.filter(
+        application__volunteer=profile,
+        application__status__in=["APPLIED", "SELECTED"],
+        date__gte=today
+    ).select_related(
+        "organization",
+        "organization__user"
+    ).distinct().order_by("date")
 
-
-
+    return render(
+    request,
+    "volunteer/dashboard.html",
+    {
+        "profile": profile,
+        "applied_count": applied,
+        "selected_count": selected,
+        "completed": completed,
+        "goal": goal,
+        "upcoming_services": upcoming_services,
+        "active_page": "dashboard",
+    }
+)
 
 @login_required
-def admin_dashboard(request):
-    if request.user.role != 'ADMIN':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
-
-    return JsonResponse({
-        'total_volunteers': VolunteerProfile.objects.count(),
-        'organizations': Organization.objects.count(),
-        'active_works': Service.objects.filter(status='APPROVED').count(),
-        'completed_works': Service.objects.filter(status='COMPLETED').count(),
-        'pending_approvals': Organization.objects.filter(approved=False).count()
-    })
-
-@login_required
-def organization_dashboard(request):
-    if request.user.role != 'ORGANIZATION':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
+def organization_dashboard_page(request):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
 
     org = Organization.objects.get(user=request.user)
+    services = Service.objects.filter(organization=org)
 
-    return JsonResponse({
-        'total_works': Service.objects.filter(organization=org).count(),
-        'active_works': Service.objects.filter(
-            organization=org, status='APPROVED'
-        ).count(),
-        'completed_works': Service.objects.filter(
-            organization=org, status='COMPLETED'
-        ).count(),
+    return render(request, "organization/dashboard.html", {
+        "services": services
     })
 
-from django.views.decorators.http import require_POST
-from datetime import datetime
+@login_required
+def admin_dashboard_page(request):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    pending_org_count = Organization.objects.filter(approved=False).count()
+    pending_service_count = Service.objects.filter(status__iexact="pending").count()
+
+    return render(
+        request,
+        "admin_panel/dashboard.html",
+        {
+            "volunteers": VolunteerProfile.objects.count(),
+            "approved_org_count": Organization.objects.filter(approved=True).count(),
+            "active": Service.objects.filter(status="APPROVED").count(),
+            "completed": Service.objects.filter(status="COMPLETED").count(),
+            "pending_org_count": pending_org_count,
+            "pending_service_count": pending_service_count,
+        }
+    )
 
 
+@login_required
+def admin_pending_services(request):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    services = Service.objects.filter(status__iexact="pending")
+
+
+    return render(
+        request,
+        "admin_panel/pending_services.html",
+        {"services": services}
+    )
+
+
+@login_required
+def admin_approve_service(request, service_id):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    service = get_object_or_404(Service, id=service_id)
+    service.status = "APPROVED"
+    service.save()
+
+    messages.success(request, "Service approved successfully")
+    return redirect("admin_pending_services")
+
+
+
+
+
+# ==================== ADMIN MODULE ====================
+@login_required
+def admin_volunteers(request):
+    if request.user.role != 'ADMIN':
+        return redirect('login')
+
+    volunteers = VolunteerProfile.objects.all()
+
+    # ---- Normalize year ----
+    def normalize_year(y):
+        if "1" in y:
+            return "1"
+        if "2" in y:
+            return "2"
+        if "3" in y:
+            return "3"
+        if "4" in y:
+            return "4"
+        return None
+
+    for v in volunteers:
+        v.norm_year = normalize_year(v.year)
+
+    # ---- Year counts ----
+    year_counts = {
+        "1": sum(1 for v in volunteers if v.norm_year == "1"),
+        "2": sum(1 for v in volunteers if v.norm_year == "2"),
+        "3": sum(1 for v in volunteers if v.norm_year == "3"),
+        "4": sum(1 for v in volunteers if v.norm_year == "4"),
+    }
+
+    # ---- Branch counts (ONLY final year) ----
+    branches = ["CSE", "ECE", "EEE", "MECH", "CIVIL"]
+    branch_counts = {
+        b: sum(1 for v in volunteers if v.norm_year == "4" and v.department == b)
+        for b in branches
+    }
+
+    # ---- Sorting ----
+    sort = request.GET.get("sort", "roll")
+    if sort == "name":
+        volunteers = sorted(volunteers, key=lambda x: x.full_name.lower())
+    else:
+        volunteers = sorted(volunteers, key=lambda x: x.student_id)
+
+    return render(request, "admin_panel/volunteers.html", {
+        "volunteers": volunteers,
+        "year_counts": year_counts,
+        "branch_counts": branch_counts,
+    })
+
+
+
+@login_required
+def admin_pending_organizations(request):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    pending_orgs = Organization.objects.filter(approved=False)
+    return render(request, "admin_panel/pending_organizations.html", {
+        "organizations": pending_orgs
+    })
+
+
+@login_required
+def approve_organization(request, org_id):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    org = get_object_or_404(Organization, id=org_id)
+    org.approved = True
+    org.user.is_active = True
+    org.user.save()
+    org.save()
+
+    messages.success(request, "Organization approved successfully")
+    return redirect("/admin_panel/pending-organizations/")
+
+
+@login_required
+def reject_organization(request, org_id):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    org = get_object_or_404(Organization, id=org_id)
+    org.user.delete()
+
+    messages.error(request, "Organization rejected")
+    return redirect("/admin_panel/pending-organizations/")
+
+
+# ==================== SERVICES ====================
 @require_POST
+@login_required
 def create_service(request):
-    user = request.user
+    if request.user.role != "ORGANIZATION":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
-    if not user.is_authenticated or user.role != 'ORGANIZATION':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
-
-    org = Organization.objects.get(user=user)
-
+    org = Organization.objects.get(user=request.user)
     data = json.loads(request.body)
 
     service = Service.objects.create(
-        title=data['title'],
-        description=data['description'],
-        location=data['location'],
-        date=datetime.strptime(data['date'], "%Y-%m-%d"),
-        required_volunteers=data['required_volunteers'],
-        organization=org
+        title=data["title"],
+        description=data["description"],
+        location=data["location"],
+        date=datetime.strptime(data["date"], "%Y-%m-%d"),
+        required_volunteers=data["required_volunteers"],
+        organization=org   # ✅ THIS IS ENOUGH
     )
 
     return JsonResponse({
-        'message': 'Service created',
-        'service_id': service.id
+        "message": "Service created",
+        "service_id": service.id
     })
 
+@login_required
 def list_services(request):
-    services = Service.objects.filter(status='APPROVED')
+    services = Service.objects.filter(status="APPROVED")
+    return JsonResponse({"services": list(services.values())})
 
-    return JsonResponse({
-        'services': list(services.values())
-    })
 
 @require_POST
+@login_required
 def apply_service(request, service_id):
-    user = request.user
+    if request.user.role != "VOLUNTEER":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
-    if not user.is_authenticated or user.role != 'VOLUNTEER':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    profile = VolunteerProfile.objects.get(user=request.user)
+    service = get_object_or_404(Service, id=service_id)
 
-    profile = VolunteerProfile.objects.get(user=user)
+    Application.objects.create(volunteer=profile, service=service)
+    return JsonResponse({"message": "Applied successfully"})
+
+
+# ==================== AI SELECTION ====================
+
+@require_POST
+@login_required
+def assign_volunteers(request, service_id):
+    if request.user.role != "ADMIN":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
     service = Service.objects.get(id=service_id)
+    applications = Application.objects.filter(
+    service=service
+).select_related("volunteer").order_by("-id")
 
-    Application.objects.create(
-        volunteer=profile,
-        service=service
+
+    scored = [(calculate_score(app.volunteer, service), app) for app in applications]
+    scored.sort(reverse=True, key=lambda x: x[0])
+
+    selected = scored[:service.required_volunteers]
+    for _, app in selected:
+        app.status = "SELECTED"
+        app.save()
+
+    service.status = "APPROVED"
+    service.save()
+
+    return JsonResponse({"message": "AI-based selection completed"})
+
+
+def calculate_score(volunteer, service):
+    score = 0
+    score += volunteer.attendance * 0.4
+
+    service_skills = service.description.lower()
+    volunteer_skills = volunteer.skills.lower()
+    match = sum(1 for word in volunteer_skills.split(",") if word.strip() in service_skills)
+    score += match * 10 * 0.4
+
+    score += volunteer.rating * 0.2
+    return score
+
+
+# ==================== SUBMISSION & RATING ====================
+
+@require_POST
+@login_required
+def submit_work(request, application_id):
+    if request.user.role != "VOLUNTEER":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    data = json.loads(request.body)
+    app = Application.objects.get(id=application_id)
+
+    app.submission_text = data.get("submission")
+    app.status = "COMPLETED"
+    app.save()
+
+    volunteer = app.volunteer
+    volunteer.completed_services += 1
+    volunteer.save()
+
+    return JsonResponse({"message": "Work submitted successfully"})
+
+
+@require_POST
+@login_required
+def rate_volunteer(request, application_id):
+    if request.user.role != "ORGANIZATION":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    data = json.loads(request.body)
+    app = Application.objects.get(id=application_id)
+
+    app.rating = data.get("rating")
+    app.review = data.get("review")
+    app.save()
+
+    ratings = Application.objects.filter(
+        volunteer=app.volunteer, rating__gt=0
+    ).values_list("rating", flat=True)
+
+    app.volunteer.rating = sum(ratings) / len(ratings)
+    app.volunteer.save()
+
+    return JsonResponse({"message": "Volunteer rated"})
+
+
+# ==================== REGISTER ====================
+
+def validate_password(password):
+    if len(password) < 8:
+        return "Password must be at least 8 characters"
+    if not re.search(r"[A-Z]", password):
+        return "Must contain uppercase letter"
+    if not re.search(r"[a-z]", password):
+        return "Must contain lowercase letter"
+    if not re.search(r"\d", password):
+        return "Must contain number"
+    if not re.search(r"[@$!%*?&]", password):
+        return "Must contain special character"
+    return None
+
+
+from django.db import transaction
+from django.shortcuts import render, redirect
+from django.contrib import messages
+@login_required
+def register_view(request):
+    if request.method != "POST":
+        return render(request, "register.html")
+
+    role = request.POST.get("role")
+    full_name = request.POST.get("full_name")
+    email = request.POST.get("email")
+    phone = request.POST.get("phone")
+    year = request.POST.get("year") if role == "VOLUNTEER" else ""
+    student_id = request.POST.get("student_id")
+    department = request.POST.get("department")
+    skills = request.POST.get("skills", "")
+    password = request.POST.get("password")
+    rpassword = request.POST.get("rpassword")
+
+    # ---------- VALIDATIONS ----------
+    if password != rpassword:
+        messages.warning(request, "Passwords do not match")
+        return render(request, "register.html")
+
+    if role == "VOLUNTEER" and not email.endswith("@srit.ac.in"):
+        messages.warning(request, "Volunteer email must end with @srit.ac.in")
+        return render(request, "register.html")
+
+    if role == "ORGANIZATION" and not email.endswith("@gmail.com"):
+        messages.warning(request, "Organization email must end with @gmail.com")
+        return render(request, "register.html")
+
+    if User.objects.filter(username=email).exists():
+        messages.warning(request, "Email already registered")
+        return render(request, "register.html")
+
+    # ---------- CREATE USER ----------
+    with transaction.atomic():
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            role=role
+        )
+
+        if role == "VOLUNTEER":
+            VolunteerProfile.objects.update_or_create(
+    user=user,
+    defaults={
+        "full_name": full_name,
+        "phone": phone,
+        "student_id": student_id,
+        "department": department,
+        "year": year,
+        "skills": skills,
+    }
+)
+
+
+
+            messages.success(request, "Volunteer registered successfully")
+
+        else:  # ORGANIZATION
+            if Organization.objects.filter(user=user).exists():
+                messages.warning(
+                    request,
+                    "Organization already registered"
+                )
+                user.delete()  # cleanup user
+                return redirect("login")
+            user.is_active = False
+            user.save()
+
+            letter = request.FILES.get("verification_letter")
+
+            Organization.objects.update_or_create(
+    user=user,
+    defaults={
+        "organization_name": full_name,  # ✅ org name only
+        "verification_letter": letter,
+        "approved": False
+    }
+)
+
+
+            messages.success(
+                request,
+                "Organization registered. Await admin approval."
+            )
+
+    return redirect("login")
+
+@login_required
+def admin_active_works(request):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    services = Service.objects.filter(status="APPROVED")
+
+    context = {
+        "services": services,
+        "active_count": services.count(),
+        "org_count": services.values("organization").distinct().count(),
+        "total_required": sum(s.required_volunteers for s in services),
+    }
+
+    return render(
+        request,
+        "admin_panel/active_works.html",
+        context
     )
 
-    return JsonResponse({'message': 'Applied successfully'})
+
+@login_required
+def admin_completed_works(request):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    services = Service.objects.filter(status="COMPLETED")
+
+    return render(request, "admin_panel/completed_works.html", {
+        "services": services
+    })
+
+@login_required
+def organization_create_service(request):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    if request.method == "POST":
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        location = request.POST.get("location")
+        date_value = request.POST.get("date")
+        required_volunteers = request.POST.get("required_volunteers")
+
+        org = Organization.objects.get(user=request.user)
+
+        Service.objects.create(
+            title=title,
+            description=description,
+            location=location,
+            date=date_value,
+            required_volunteers=required_volunteers,
+            organization=org,
+            authorization_letter=request.FILES.get("authorization_letter"),
+            status="PENDING"
+        )
+
+        messages.success(
+            request,
+            "Service submitted successfully. Await admin approval."
+        )
+
+        return redirect("organization_dashboard")
+
+    return render(request, "organization/create_service.html")
+
+@login_required
+def admin_assign_volunteers_page(request, service_id):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    service = get_object_or_404(Service, id=service_id)
+    applications = Application.objects.filter(service=service)
+
+    return render(
+        request,
+        "admin_panel/assign_volunteers.html",
+        {
+            "service": service,
+            "applications": applications
+        }
+    )
+# ---- AI SCORING ----
+def calculate_score(volunteer, service):
+    score = 0
+    score += volunteer.attendance * 0.4
+    score += volunteer.rating * 0.6
+    return score
+
+
+# ---- ADMIN ASSIGN VOLUNTEERS ----
+from django.views.decorators.http import require_POST
 
 @require_POST
 def assign_volunteers(request, service_id):
-    if request.user.role != 'ADMIN':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    if request.user.role != "ADMIN":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
     service = Service.objects.get(id=service_id)
 
     applications = Application.objects.filter(
         service=service,
-        status='APPLIED'
+        status="APPLIED"
     )
 
     scored = []
@@ -251,280 +655,318 @@ def assign_volunteers(request, service_id):
         scored.append((score, app))
 
     scored.sort(reverse=True, key=lambda x: x[0])
-
     selected = scored[:service.required_volunteers]
 
     for _, app in selected:
-        app.status = 'SELECTED'
+        app.status = "SELECTED"
         app.save()
 
-    service.status = 'APPROVED'
+    service.status = "APPROVED"   # ACTIVE
     service.save()
 
-    return JsonResponse({'message': 'AI-based selection completed'})
-
-
-from django.shortcuts import render
-
-def home(request):
-    return render(request, 'home.html')
-
-
+    return redirect("admin_active_works")
 
 @login_required
-def volunteer_dashboard_page(request):
-    profile = VolunteerProfile.objects.get(user=request.user)
-
-    assigned = Application.objects.filter(
-        volunteer=profile, status='SELECTED'
-    ).count()
-
-    completed = Application.objects.filter(
-        volunteer=profile, status='COMPLETED'
-    ).count()
-
-    return render(request, 'volunteer/dashboard.html', {
-        'assigned': assigned,
-        'completed': completed,
-        'attendance': profile.attendance
-    })
-
-@login_required
-def organization_dashboard_page(request):
-    org = Organization.objects.get(user=request.user)
-    services = Service.objects.filter(organization=org)
-
-    return render(request, 'organization/dashboard.html', {
-        'services': services
-    })
-@login_required
-def admin_dashboard_page(request):
-    return render(request, 'admin_panel/dashboard.html', {
-        'volunteers': VolunteerProfile.objects.count(),
-        'organizations': Organization.objects.count(),
-        'active': Service.objects.filter(status='APPROVED').count(),
-        'completed': Service.objects.filter(status='COMPLETED').count()
-    })
-
-def calculate_score(volunteer, service):
-    score = 0
-
-    # Attendance (40%)
-    score += volunteer.attendance * 0.4
-
-    # Skill match (40%)
-    service_skills = service.description.lower()
-    volunteer_skills = volunteer.skills.lower()
-
-    match = sum(
-        1 for word in volunteer_skills.split(',')
-        if word.strip() in service_skills
-    )
-    score += match * 10 * 0.4
-
-    # Rating (20%)
-    score += volunteer.rating * 0.2
-
-    return score
-
 @require_POST
-def submit_work(request, application_id):
-    if not request.user.is_authenticated or request.user.role != 'VOLUNTEER':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
+def admin_mark_service_completed(request, service_id):
+    if request.user.role != "ADMIN":
+        return redirect("home")
 
-    data = json.loads(request.body)
-    application = Application.objects.get(id=application_id)
+    service = get_object_or_404(Service, id=service_id, status="APPROVED")
 
-    application.submission_text = data.get('submission')
-    application.status = 'COMPLETED'
-    application.save()
+    service.status = "COMPLETED"
+    service.save()
 
-    volunteer = application.volunteer
-    volunteer.completed_services += 1
-    volunteer.save()
+    return redirect("admin_completed_works")
 
-    return JsonResponse({'message': 'Work submitted successfully'})
-@require_POST
-def rate_volunteer(request, application_id):
-    if request.user.role != 'ORGANIZATION':
-        return JsonResponse({'error': 'Unauthorized'}, status=403)
-
-    data = json.loads(request.body)
-    application = Application.objects.get(id=application_id)
-
-    application.rating = data.get('rating')
-    application.review = data.get('review')
-    application.save()
-
-    volunteer = application.volunteer
-    all_ratings = Application.objects.filter(
-        volunteer=volunteer, rating__gt=0
-    ).values_list('rating', flat=True)
-
-    volunteer.rating = sum(all_ratings) / len(all_ratings)
-    volunteer.save()
-
-    return JsonResponse({'message': 'Volunteer rated successfully'})
-
-import re
-
-def validate_password(password):
-    if len(password) < 8:
-        return "Password must be at least 8 characters long"
-
-    if not re.search(r"[A-Z]", password):
-        return "Password must contain at least one uppercase letter"
-
-    if not re.search(r"[a-z]", password):
-        return "Password must contain at least one lowercase letter"
-
-    if not re.search(r"\d", password):
-        return "Password must contain at least one number"
-
-    if not re.search(r"[@$!%*?&]", password):
-        return "Password must contain at least one special character (@$!%*?&)"
-
-    return None  # ✅ Valid password
-
-
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import get_user_model
-from .models import VolunteerProfile, Organization
-
-User = get_user_model()
-
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import User, VolunteerProfile, Organization
-
-
-from django.db import transaction
-
-def register_view(request):
-    if request.method == "POST":
-        role = request.POST.get("role")
-
-        full_name = request.POST.get("full_name")
-        email = request.POST.get("email")
-        phone = request.POST.get("phone")
-        year = request.POST.get("year") if role == "VOLUNTEER" else ""
-        student_id = request.POST.get("student_id")
-        department = request.POST.get("department")
-
-        skills = request.POST.get("skills", "")
-
-        password = request.POST.get("password")
-        rpassword = request.POST.get("rpassword")
-
-        # 🔴 ALL VALIDATIONS FIRST
-
-        # Domain check
-        if role == "VOLUNTEER" :
-            if not email.endswith("@srit.ac.in"):
-                messages.warning(request, "Volunteer email must end with @srit.ac.in")
-                return render(request, "register.html", {
-                    "form_data": request.POST,
-                    "selected_role": role
-                })
-            # Password match check
-            if password != rpassword:
-                messages.warning(request, "Passwords do not match")
-                return render(request, "register.html", {
-                    "form_data": request.POST,
-                    "selected_role": role,
-                })
-
-            # 🔐 Detailed password validation
-            password_error = validate_password(password)
-            if password_error:
-                messages.warning(request, password_error)
-                return render(request, "register.html", {
-                    "form_data": request.POST,
-                    "selected_role": role
-                })
-
-        if role == "ORGANIZATION" and not email.endswith("@gmail.com"):
-            messages.warning(request, "Organization email must end with @gmail.com")
-            return render(request, "register.html", {
-                "form_data": request.POST,
-                "selected_role": role
-            })
-
-        # Password match
-        if password != rpassword:
-            messages.warning(request, "Passwords do not match")
-            return render(request, "register.html", {
-                "form_data": request.POST,
-                "selected_role": role
-            })
-
-        # Volunteer email unique
-        if role == "VOLUNTEER" :
-            if User.objects.filter(email=email).exists():
-                messages.warning(request, "Volunteer already registered with this email")
-                return render(request, "register.html", {
-                    "form_data": request.POST,
-                    "selected_role": role
-            })
-            if VolunteerProfile.objects.filter(student_id=student_id).exists():
-                messages.warning(request, "Student ID already registered")
-                return render(request, "register.html", {
-                    "form_data": request.POST,
-                    "selected_role": role
-            })
-
-        # Organization email unique (User-level)
-        if role == "ORGANIZATION" and User.objects.filter(username=email).exists():
-            messages.warning(request, "Organization already registered with this email")
-            return render(request, "register.html", {
-                "form_data": request.POST,
-                "selected_role": role
-            })
-
-        # 🔒 ATOMIC BLOCK (CRITICAL)
-        with transaction.atomic():
-
-            user = User.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                role=role,
-            )
-            user.save();
-            if role == "VOLUNTEER":
-                vprofile,created =VolunteerProfile.objects.update_or_create(
-                    user=user,
-                    defaults={
-                        "full_name": full_name,
-                        "phone": phone,
-                        "student_id": student_id,
-                        "department": department,
-                        "year": year,
-                        "skills": skills,
-                    }
-                )
-                vprofile.save()
-                messages.success(request, "Volunteer registered successfully")
-
-            elif role == "ORGANIZATION":
-                user.is_active = False
-                user.save()
-
-                Organization.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        "organization_name": full_name,
-                        "approved": False
-                    }
-                )
-                messages.success(
-                    request,
-                    "Organization registered. Await admin approval."
-                )
-
+@login_required
+def volunteer_available_services(request):
+    if request.user.role != "VOLUNTEER":
         return redirect("login")
 
-    return render(request, "register.html")
+    today = date.today()
+
+    services = Service.objects.filter(status="APPROVED")
+
+    profile = VolunteerProfile.objects.get(user=request.user)
+
+    applied_services = Application.objects.filter(
+        volunteer=profile
+    ).values_list("service_id", flat=True)
+
+    return render(
+    request,
+    "volunteer/available_services.html",
+    {
+        "services": services,
+        "applied_services": applied_services,
+        "today": today,
+        "active_page": "services"
+    }
+)
+
+@login_required
+def volunteer_apply_service(request, service_id):
+    if request.user.role != "VOLUNTEER":
+        return redirect("login")
+
+    profile = VolunteerProfile.objects.get(user=request.user)
+
+    service = get_object_or_404(
+        Service,
+        id=service_id,
+        status="APPROVED"   
+    )
+
+    # Prevent duplicate apply
+    if Application.objects.filter(
+        volunteer=profile,
+        service=service
+    ).exists():
+        messages.warning(
+            request,
+            "You have already sent a request for this service"
+        )
+        return redirect("volunteer_services")
+
+    Application.objects.create(
+        volunteer=profile,
+        service=service,
+        status="APPLIED"
+    )
+
+    messages.success(
+        request,
+        "Request sent for approval"
+    )
+
+    return redirect("volunteer_services")
+
+@login_required
+def organization_view_applicants(request, service_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    org = Organization.objects.get(user=request.user)
+    service = get_object_or_404(Service, id=service_id, organization=org)
+
+    applications = (
+        Application.objects
+        .filter(service=service)
+        .select_related("volunteer")   # ✅ THIS IS THE KEY
+    )
+    for app in applications:
+        app.skill_list = app.volunteer.skills.split(",") if app.volunteer.skills else []
+
+    return render(
+        request,
+        "organization/view_applicants.html",
+        {
+            "service": service,
+            "applications": applications
+        }
+    )
+
+
+
+@login_required
+def org_approve_volunteer(request, app_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    app = get_object_or_404(Application, id=app_id)
+
+    # Security: only owning org can approve
+    if app.service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    app.status = "SELECTED"
+    app.save()
+
+    return redirect(
+        "org_view_applicants",
+        service_id=app.service.id
+    )
+
+@login_required
+def org_reject_volunteer(request, app_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    app = get_object_or_404(Application, id=app_id)
+
+    if app.service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    app.status = "REJECTED"
+    app.save()
+
+    return redirect(
+        "org_view_applicants",
+        service_id=app.service.id
+    )
+
+@login_required
+def org_view_applicants(request, service_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    org = Organization.objects.get(user=request.user)
+    service = get_object_or_404(Service, id=service_id, organization=org)
+
+    applications = Application.objects.filter(
+        service=service,
+        status="APPLIED"
+    )
+
+    return render(
+        request,
+        "organization/view_applicants.html",
+        {
+            "service": service,
+            "applications": applications
+        }
+    )
+
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+
+@require_POST
+@login_required
+def org_select_volunteers(request, service_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    org = Organization.objects.get(user=request.user)
+    service = get_object_or_404(Service, id=service_id, organization=org)
+
+    # Get selected application IDs from form
+    selected_ids = request.POST.getlist("selected_volunteers")
+
+    if not selected_ids:
+        messages.warning(
+            request,
+            "Please select at least one volunteer."
+        )
+        return redirect("org_view_applicants", service_id=service.id)
+
+    # All applications for this service
+    applications = Application.objects.filter(service=service)
+
+    for app in applications:
+        if str(app.id) in selected_ids:
+            app.status = "SELECTED"
+        else:
+            app.status = "REJECTED"
+        app.save()
+
+    # Mark service as ACTIVE (service is now running)
+    service.status = "ACTIVE"
+    service.save()
+
+    messages.success(
+        request,
+        "Volunteers selected successfully. Service is now ACTIVE."
+    )
+
+    return redirect("organization_dashboard")
+
+@login_required
+def org_view_volunteer_profile(request, volunteer_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    volunteer = get_object_or_404(
+        VolunteerProfile,
+        id=volunteer_id
+    )
+
+    return render(
+        request,
+        "organization/volunteer_profile_view.html",
+        {
+            "volunteer": volunteer
+        }
+    )
+
+
+@login_required
+def volunteer_applications(request):
+    if request.user.role != "VOLUNTEER":
+        return redirect("login")
+
+    profile = VolunteerProfile.objects.get(user=request.user)
+
+    applications = Application.objects.filter(
+        volunteer=profile
+    ).select_related("service")
+
+    return render(
+    request,
+    "volunteer/my_applications.html",
+    {
+        "applications": applications,
+        "active_page": "applications"
+    }
+)
+
+
+@login_required
+def volunteer_profile(request):
+    if request.user.role != "VOLUNTEER":
+        return redirect("login")
+
+    profile, created = VolunteerProfile.objects.get_or_create(
+        user=request.user,
+        defaults={
+            "full_name": request.user.email.split("@")[0],
+            "phone": "",
+            "student_id": "",
+            "department": "",
+            "year": "",
+            "skills": ""
+        }
+    )
+
+    if request.method == "POST":
+        profile.full_name = request.POST.get("full_name", profile.full_name)
+        profile.phone = request.POST.get("phone", profile.phone)
+        profile.skills = request.POST.get("skills", profile.skills)
+
+        # ✅ SAVE PHOTO
+        if "photo" in request.FILES:
+            profile.photo = request.FILES["photo"]
+
+        # ✅ SAVE COVER PHOTO
+        if "cover_photo" in request.FILES:
+            profile.cover_photo = request.FILES["cover_photo"]
+
+        profile.save()
+
+        return redirect("volunteer_profile")
+
+    return render(
+    request,
+    "volunteer/profile.html",
+    {
+        "profile": profile,
+        "active_page": "profile"
+    }
+)
+
+@login_required
+def admin_approved_organizations(request):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    organizations = Organization.objects.filter(approved=True)
+
+    return render(
+        request,
+        "admin_panel/approved_organizations.html",
+        {
+            "organizations": organizations,
+            "active_page": "approved_orgs"
+        }
+    )
+

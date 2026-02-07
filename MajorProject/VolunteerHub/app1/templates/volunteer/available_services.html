@@ -1,0 +1,91 @@
+{% extends "base_volunteer.html" %}
+{% block content %}
+
+<p>Total services: {{ services|length }}</p>
+
+<style>
+.service-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:22px;
+}
+
+.service-card{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 14px 35px rgba(0,0,0,.08);
+}
+
+.service-card h3{
+    margin:0 0 10px;
+}
+
+.badge{
+    display:inline-block;
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.active{background:#dcfce7;color:#166534;}
+.pending{background:#fde68a;color:#92400e;}
+.closed{background:#fee2e2;color:#991b1b;}
+
+.btn{
+    display:inline-block;
+    margin-top:14px;
+    padding:10px 18px;
+    background:linear-gradient(90deg,#4f46e5,#6366f1);
+    color:white;
+    border-radius:10px;
+    text-decoration:none;
+}
+</style>
+
+<h1>Available Services</h1>
+
+<div class="service-grid">
+
+{% for s in services %}
+<div class="service-card">
+
+    <!-- STATUS BADGE -->
+    {% if s.date < today %}
+        <span class="badge closed">CLOSED</span>
+    {% else %}
+        <span class="badge active">ACTIVE</span>
+    {% endif %}
+
+    <h3>{{ s.title }}</h3>
+    <p><strong>Organization:</strong> {{ s.organization.organization_name }}</p>
+<p><strong>Email:</strong> {{ s.organization.user.email }}</p>
+
+
+    <p>📍 {{ s.location }}</p>
+    <p>📅 {{ s.date }}</p>
+    <p>👥 Required: {{ s.required_volunteers }}</p>
+
+    <!-- APPLY LOGIC -->
+    {% if s.date < today %}
+        <span class="badge closed">Closed</span>
+
+    {% elif s.id in applied_services %}
+        <span class="badge pending">Request Sent</span>
+
+    {% else %}
+        <a href="{% url 'volunteer_apply_service' s.id %}" class="btn">
+            Apply
+        </a>
+    {% endif %}
+
+</div>
+
+{% empty %}
+<p>No services available.</p>
+{% endfor %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Completed Works</h2>
+
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Organization</th>
+        <th>Date</th>
+    </tr>
+
+    {% for s in services %}
+    <tr>
+        <td>{{ s.title }}</td>
+        <td>{{ s.organization.organization_name }}</td>
+        <td>{{ s.date }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="3">No completed works</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

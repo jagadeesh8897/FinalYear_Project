@@ -1,0 +1,204 @@
+{% extends "organization/base.html" %}
+{% block content %}
+
+<style>
+body{ background:#f4f6fb; }
+
+.applicant-card{
+    background:#e5e7eb;
+    border-radius:26px;
+    padding:28px;
+    margin-bottom:30px;
+}
+
+.status{
+    background:#dbeafe;
+    color:#1e40af;
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:13px;
+    display:inline-block;
+    margin-bottom:12px;
+}
+
+.content{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:30px;
+}
+
+.name{
+    font-size:22px;
+    font-weight:700;
+}
+
+.meta{
+    color:#6b7280;
+    margin:6px 0 12px;
+}
+
+.skills span{
+    display:inline-block;
+    background:#d1d5db;
+    color:#111827;
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:13px;
+    margin:4px 6px 0 0;
+}
+
+.actions{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.btn{
+    width:150px;
+    padding:8px 0;
+    border-radius:20px;
+    border:none;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.approve{ background:#22c55e; color:white; }
+.reject{ background:#ef4444; color:white; }
+
+.side{
+    text-align:right;
+    opacity:.4;
+}
+
+.stars span{
+    font-size:22px;
+    color:#d1d5db;
+}
+
+/* MODAL */
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+}
+
+.modal-box{
+    background:white;
+    width:420px;
+    border-radius:18px;
+    padding:24px;
+}
+
+.close{
+    float:right;
+    cursor:pointer;
+    font-size:20px;
+}
+</style>
+
+<h1>Applicants for {{ service.title }}</h1>
+<p class="subtitle">Approve volunteers, mark attendance & rate</p>
+
+{% if applications %}
+{% for app in applications %}
+
+<div class="applicant-card">
+
+    <span class="status">{{ app.status }}</span>
+
+    <div class="content">
+
+        <!-- LEFT -->
+        <div>
+            <div class="name">{{ app.volunteer.full_name }}</div>
+
+            <div class="meta">
+                {{ app.volunteer.year }} · {{ app.volunteer.department }}
+            </div>
+
+            <!-- SKILLS -->
+            <div class="skills">
+                {% for skill in app.skill_list %}
+                    <span>{{ skill }}</span>
+                {% empty %}
+                    <span>No skills added</span>
+                {% endfor %}
+            </div>
+
+            <br>
+            <a href="javascript:void(0)"
+               onclick="openProfile(
+                   '{{ app.volunteer.full_name }}',
+                   '{{ app.volunteer.year }}',
+                   '{{ app.volunteer.department }}',
+                   '{{ app.volunteer.skills }}'
+               )">
+               View Profile →
+            </a>
+        </div>
+
+        <!-- RIGHT -->
+        <div style="display:flex; justify-content:space-between;">
+
+            <div class="actions">
+                <form method="post"
+                      action="{% url 'org_approve_volunteer' app.id %}">
+                    {% csrf_token %}
+                    <button class="btn approve">Approve</button>
+                </form>
+
+                <form method="post"
+                      action="{% url 'org_reject_volunteer' app.id %}">
+                    {% csrf_token %}
+                    <button class="btn reject">Reject</button>
+                </form>
+            </div>
+
+            <div class="side">
+                <h4>Attendance</h4>
+                <input type="checkbox" disabled>
+                <p class="meta">Available after approval</p>
+
+                <h4>Rating</h4>
+                <div class="stars">
+                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+{% else %}
+<p>No applicants yet.</p>
+{% endif %}
+
+<!-- PROFILE MODAL -->
+<div class="modal" id="profileModal">
+    <div class="modal-box">
+        <span class="close" onclick="closeProfile()">✕</span>
+        <h2 id="pName"></h2>
+        <p id="pMeta"></p>
+        <p id="pSkills"></p>
+    </div>
+</div>
+
+<script>
+function openProfile(name, year, dept, skills){
+    document.getElementById("pName").innerText = name;
+    document.getElementById("pMeta").innerText = year + " · " + dept;
+    document.getElementById("pSkills").innerText = skills;
+    document.getElementById("profileModal").style.display = "flex";
+}
+function closeProfile(){
+    document.getElementById("profileModal").style.display = "none";
+}
+</script>
+
+{% endblock %}

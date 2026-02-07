@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.page{
+    padding:40px;
+    background:linear-gradient(180deg,#eef2ff,#ffffff);
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:24px;
+}
+
+.service-card{
+    background:white;
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.service-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 22px 55px rgba(79,70,229,.25);
+}
+
+.title{
+    font-size:20px;
+    font-weight:700;
+    color:#1f2937;
+    margin-bottom:6px;
+}
+
+.org{
+    color:#4f46e5;
+    font-weight:600;
+}
+
+.meta{
+    color:#6b7280;
+    margin:6px 0;
+}
+
+.letter{
+    margin-top:10px;
+}
+
+.btn{
+    display:block;
+    margin-top:16px;
+    padding:12px;
+    text-align:center;
+    background:linear-gradient(90deg,#4f46e5,#6366f1);
+    color:white;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+}
+.empty{
+    text-align:center;
+    color:#6b7280;
+    margin-top:60px;
+}
+</style>
+
+<div class="page">
+
+<h1>⏳ Pending Service Requests</h1>
+
+<div class="cards">
+
+{% for s in services %}
+    <div class="service-card">
+
+        <div class="title">{{ s.title }}</div>
+        <div class="org">{{ s.organization.organization_name }}</div>
+
+        <div class="meta">📍 {{ s.location }}</div>
+        <div class="meta">👥 Required: {{ s.required_volunteers }}</div>
+
+        <div class="letter">
+            {% if s.authorization_letter %}
+                📄 <a href="{{ s.authorization_letter.url }}" target="_blank">
+                    View Authorization Letter
+                </a>
+            {% else %}
+                <span style="color:red;">No letter uploaded</span>
+            {% endif %}
+        </div>
+
+        <a href="{% url 'admin_approve_service' s.id %}" class="btn">
+            ✅ Approve Service
+        </a>
+
+    </div>
+{% empty %}
+    <div class="empty">
+        🎉 No pending service requests
+    </div>
+{% endfor %}
+
+</div>
+</div>
+
+{% endblock %}

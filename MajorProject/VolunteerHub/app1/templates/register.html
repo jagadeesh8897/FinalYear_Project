@@ -48,7 +48,9 @@
                 {% endfor %}
             {% endif %}
 
-            <form method="POST" action="{% url 'register' %}" id="registerForm">
+            <!-- 🔹 CHANGE 1: enctype added -->
+            <form method="POST" action="{% url 'register' %}" id="registerForm"
+                  enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <!-- ROLE -->
@@ -60,7 +62,7 @@
                 <!-- COMMON -->
                 <input name="full_name"
                        value="{{ form_data.full_name|default:'' }}"
-                       placeholder="Full Name / Organization Name" required>
+                       placeholder="Full Name" required>
 
                 <input name="email"
                        type="email"
@@ -87,13 +89,14 @@
                 <!-- VOLUNTEER ONLY -->
                 <select name="year" id="year">
                     <option value="">Select Year of Study</option>
-                    <option value="1st Year" {% if form_data.year == "1st Year" %}selected{% endif %}>1st Year</option>
-                    <option value="2nd Year" {% if form_data.year == "2nd Year" %}selected{% endif %}>2nd Year</option>
-                    <option value="3rd Year" {% if form_data.year == "3rd Year" %}selected{% endif %}>3rd Year</option>
-                    <option value="4th Year" {% if form_data.year == "4th Year" %}selected{% endif %}>4th Year</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
                 </select>
 
                 <!-- SKILLS -->
+                
                 <div class="skills" id="skillsBox">
                     <span onclick="toggleSkill(this)">Teaching</span>
                     <span onclick="toggleSkill(this)">Event Management</span>
@@ -101,6 +104,16 @@
                     <span onclick="toggleSkill(this)">Healthcare</span>
                     <span onclick="toggleSkill(this)">Environment</span>
                     <span onclick="toggleSkill(this)">Social Work</span>
+                </div>
+
+                <!-- 🔹 CHANGE 2: ORGANIZATION LETTER UPLOAD -->
+                <div id="orgLetterBox" style="display:none;">
+                    <label style="font-weight:600;margin-top:10px;display:block;">
+                        Upload Organization Verification Letter (PDF / Image)
+                    </label>
+                    <input type="file"
+                           name="verification_letter"
+                           accept=".pdf,.jpg,.jpeg,.png">
                 </div>
 
                 <!-- PASSWORD -->
@@ -144,29 +157,28 @@ function updateUI() {
     document.getElementById("role").value = selectedRole;
     const isVolunteer = selectedRole === "VOLUNTEER";
 
-    // Show/hide fields
     document.getElementById("year").style.display = isVolunteer ? "block" : "none";
     document.getElementById("skillsBox").style.display = isVolunteer ? "block" : "none";
     document.getElementById("department").style.display = isVolunteer ? "block" : "none";
     document.getElementById("student_id").style.display = isVolunteer ? "block" : "none";
 
-    // Toggle required attributes
     document.getElementById("year").required = isVolunteer;
     document.getElementById("department").required = isVolunteer;
     document.getElementById("student_id").required = isVolunteer;
 
-    // Titles and button text
     document.getElementById("registerTitle").innerText =
         isVolunteer ? "Volunteer Registration" : "Organization Registration";
 
     document.getElementById("submitBtn").innerText =
         isVolunteer ? "Create Account" : "Submit for Approval";
+
+    /* 🔹 CHANGE 3: show/hide letter upload */
+    document.getElementById("orgLetterBox").style.display =
+        selectedRole === "ORGANIZATION" ? "block" : "none";
 }
 
-// Run once on page load
 window.onload = updateUI;
 
-// Tab click
 document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
         selectedRole = tab.dataset.role;
@@ -174,14 +186,12 @@ document.querySelectorAll(".tab").forEach(tab => {
     });
 });
 
-/* AUTO HIDE ERROR */
 setTimeout(() => {
     document.querySelectorAll(".error-message").forEach(msg => {
         msg.style.display = "none";
     });
 }, 3000);
 
-/* SKILLS */
 function toggleSkill(el) {
     el.classList.toggle("active");
     const skill = el.innerText;
@@ -190,13 +200,11 @@ function toggleSkill(el) {
         : skills.push(skill);
 }
 
-/* PASSWORD TOGGLE */
 function togglePassword() {
     const pwd = document.getElementById("password");
     pwd.type = pwd.type === "password" ? "text" : "password";
 }
 
-/* BEFORE SUBMIT */
 document.getElementById("registerForm").onsubmit = function () {
     document.getElementById("skillsInput").value = skills.join(",");
 };

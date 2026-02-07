@@ -20,23 +20,34 @@ class VolunteerProfile(models.Model):
 
     full_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)
+    student_id = models.CharField(max_length=20)
+    department = models.CharField(max_length=20, default="", blank=True)
+
     year = models.CharField(max_length=20)
-    student_id = models.CharField(max_length=20, unique=True,null=True,blank=True)  # ✅ NEW
-    department = models.CharField(max_length=50, null=True,blank=True)
-    skills = models.TextField()
+    skills = models.TextField(blank=True)
 
-    attendance = models.IntegerField(default=0)
-    completed_services = models.IntegerField(default=0)
+    photo = models.ImageField(upload_to="profiles/", blank=True, null=True)
+    cover_photo = models.ImageField(upload_to="covers/", blank=True, null=True)
+
     rating = models.FloatField(default=0)
+    attendance = models.IntegerField(default=0)
 
+    @property
+    def skill_list(self):
+        return [s.strip() for s in self.skills.split(",")] if self.skills else []
+    
     def __str__(self):
         return self.full_name
-
 
 
 class Organization(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organization_name = models.CharField(max_length=100)
+    verification_letter = models.FileField(
+        upload_to="org_letters/",
+        blank=True,
+        null=True
+    )
     approved = models.BooleanField(default=False)
 
     def __str__(self):
@@ -60,16 +71,26 @@ class Service(models.Model):
         on_delete=models.CASCADE
     )
 
+    organization_name = models.CharField(
+        max_length=200,
+        blank=True
+    )  # ✅ NEW FIELD (typed manually)
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='PENDING'
     )
-
+    authorization_letter = models.FileField(
+        upload_to="service_letters/",
+        null=True,
+        blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
+
 
 
 class Application(models.Model):

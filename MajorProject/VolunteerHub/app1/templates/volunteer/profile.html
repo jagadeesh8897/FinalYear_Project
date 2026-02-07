@@ -1,0 +1,187 @@
+{% extends "base_volunteer.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+.profile-wrapper{
+    max-width:1100px;
+    margin:auto;
+}
+
+/* COVER */
+.cover{
+    height:260px;
+    border-radius:20px;
+    position:relative;
+    background-size:cover;
+    background-position:center;
+}
+
+.cover label{
+    position:absolute;
+    right:20px;
+    bottom:20px;
+    background:rgba(0,0,0,.6);
+    color:white;
+    padding:8px 14px;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+/* PROFILE PIC */
+.avatar{
+    position:relative;
+    width:160px;
+    height:160px;
+    margin:-80px 0 0 40px;
+}
+
+.avatar img{
+    width:160px;
+    height:160px;
+    border-radius:50%;
+    border:6px solid white;
+    object-fit:cover;
+}
+
+.avatar label{
+    position:absolute;
+    bottom:10px;
+    right:10px;
+    background:#4f46e5;
+    color:white;
+    padding:6px 10px;
+    border-radius:50%;
+    cursor:pointer;
+}
+
+/* INFO GRID */
+.info-grid{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:30px;
+    margin-top:30px;
+}
+
+.card{
+    background:white;
+    padding:24px;
+    border-radius:18px;
+    box-shadow:0 14px 40px rgba(0,0,0,.08);
+}
+
+input, textarea{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+    margin-top:8px;
+}
+
+/* READONLY LOOK */
+.readonly{
+    background:#f9fafb;
+    cursor:pointer;
+}
+
+button{
+    background:#4f46e5;
+    color:white;
+    border:none;
+    padding:12px 18px;
+    border-radius:12px;
+    cursor:pointer;
+}
+</style>
+
+<form method="POST" enctype="multipart/form-data" id="profileForm">
+{% csrf_token %}
+
+<div class="profile-wrapper">
+
+    <!-- ================= COVER ================= -->
+    {% if profile.cover_photo %}
+        <div class="cover"
+             style="background-image:url('{{ profile.cover_photo.url }}');">
+    {% else %}
+        <div class="cover"
+             style="background-image:url('{% static "images/cover.jpg" %}');">
+    {% endif %}
+            <label for="coverInput">✏️ Change Cover</label>
+            <input id="coverInput" type="file" name="cover_photo" hidden>
+        </div>
+
+    <!-- ================= PROFILE PIC ================= -->
+    <div class="avatar">
+        {% if profile.photo %}
+            <img src="{{ profile.photo.url }}">
+        {% else %}
+            <img src="{% static 'images/avatar.png' %}">
+        {% endif %}
+
+        <label for="photoInput">📷</label>
+        <input id="photoInput" type="file" name="photo" hidden>
+    </div>
+
+    <!-- ================= INFO ================= -->
+    <div class="info-grid">
+
+        <!-- LEFT -->
+        <div class="card">
+            <h2>Basic Info</h2>
+
+            <label>Full Name</label>
+            <input name="full_name"
+                   value="{{ profile.full_name }}"
+                   readonly
+                   class="readonly editable">
+
+            <label>Phone</label>
+            <input name="phone"
+                   value="{{ profile.phone }}"
+                   readonly
+                   class="readonly editable">
+
+            <label>Skills</label>
+            <textarea name="skills"
+                      readonly
+                      class="readonly editable">{{ profile.skills }}</textarea>
+
+            <br><br>
+            <button type="submit">Save Changes</button>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="card">
+            <h3>Academic</h3>
+            <p><b>ID:</b> {{ profile.student_id }}</p>
+            <p><b>Dept:</b> {{ profile.department }}</p>
+        </div>
+
+    </div>
+
+</div>
+
+</form>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+// AUTO SUBMIT FOR IMAGES
+document.getElementById("photoInput").addEventListener("change", () => {
+    document.getElementById("profileForm").submit();
+});
+document.getElementById("coverInput").addEventListener("change", () => {
+    document.getElementById("profileForm").submit();
+});
+
+// CLICK TO EDIT
+document.querySelectorAll(".editable").forEach(field => {
+    field.addEventListener("click", () => {
+        field.removeAttribute("readonly");
+        field.classList.remove("readonly");
+        field.focus();
+    });
+});
+</script>
+
+{% endblock %}

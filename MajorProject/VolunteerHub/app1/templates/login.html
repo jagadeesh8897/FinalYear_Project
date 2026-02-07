@@ -1,4 +1,5 @@
 {% load static %}
+<!DOCTYPE html>
 <html>
 <head>
     <title>Login | VolunteerHub</title>
@@ -30,25 +31,26 @@
             <!-- ROLE TABS -->
             <div class="tabs">
                 <div class="tab volunteer active" data-role="VOLUNTEER">
-                    <span class="icon">👤</span> Volunteer
+                    👤 Volunteer
                 </div>
                 <div class="tab organization" data-role="ORGANIZATION">
-                    <span class="icon">🏢</span> Organization
+                    🏢 Organization
                 </div>
                 <div class="tab admin" data-role="ADMIN">
-                    <span class="icon">🛡️</span> Admin
+                    🛡️ Admin
                 </div>
             </div>
 
+            <!-- DYNAMIC TITLE -->
             <h2 id="loginTitle">Volunteer Login</h2>
 
-            <!-- LOGIN FORM -->
+            <!-- CSRF -->
             <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
 
-
+            <!-- LOGIN FORM -->
             <form id="loginForm">
 
-                <input id="username" placeholder="Email address" required>
+                <input id="username" type="email" placeholder="Email address" required>
 
                 <div class="password-box">
                     <input id="password" type="password" placeholder="Password" required>
@@ -72,22 +74,47 @@
 <script>
 let selectedRole = "VOLUNTEER";
 
+/* -------- ROLE TAB CLICK -------- */
 document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        selectedRole = tab.dataset.role;
+        setRole(tab.dataset.role);
     });
 });
 
-document.getElementById("loginForm").onsubmit = async function(e) {
+/* -------- SET ROLE FUNCTION -------- */
+function setRole(role) {
+    selectedRole = role;
+
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelector(`.tab[data-role="${role}"]`).classList.add("active");
+
+    const titles = {
+        "VOLUNTEER": "Volunteer Login",
+        "ORGANIZATION": "Organization Login",
+        "ADMIN": "Admin Login"
+    };
+
+    document.getElementById("loginTitle").innerText = titles[role];
+}
+
+/* -------- AUTO ROLE DETECTION FROM EMAIL -------- */
+document.getElementById("username").addEventListener("input", function () {
+    const email = this.value;
+
+    if (email.endsWith("@srit.ac.in")) {
+        setRole("VOLUNTEER");
+    } 
+    else if (email.endsWith("@gmail.com")) {
+        setRole("ORGANIZATION");
+    }
+});
+
+/* -------- LOGIN SUBMIT -------- */
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
     const errorBox = document.getElementById("loginError");
     errorBox.style.display = "none";
-
-    const usernameInput = document.getElementById("username");
-    const passwordInput = document.getElementById("password");
 
     try {
         const res = await fetch("/api/login/", {
@@ -97,8 +124,8 @@ document.getElementById("loginForm").onsubmit = async function(e) {
                 "X-CSRFToken": document.getElementById("csrfToken").value
             },
             body: JSON.stringify({
-                username: usernameInput.value,
-                password: passwordInput.value,
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value,
                 role: selectedRole
             })
         });
@@ -113,21 +140,22 @@ document.getElementById("loginForm").onsubmit = async function(e) {
             else
                 window.location.href = "/admin-panel/dashboard/";
         } else {
-            errorBox.innerText = `${selectedRole} login failed`;
+            errorBox.innerText = data.message || "Login failed";
             errorBox.style.display = "block";
-
-            setTimeout(() => {
-                errorBox.style.display = "none";
-            }, 3000);
         }
+
     } catch (err) {
         errorBox.innerText = "Server error. Try again.";
         errorBox.style.display = "block";
     }
-};
+});
+
+/* -------- PASSWORD TOGGLE -------- */
+function togglePassword() {
+    const pwd = document.getElementById("password");
+    pwd.type = pwd.type === "password" ? "text" : "password";
+}
 </script>
-
-
 
 </body>
 </html>

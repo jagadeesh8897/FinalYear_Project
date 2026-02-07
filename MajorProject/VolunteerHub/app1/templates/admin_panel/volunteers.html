@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body{
+    background: linear-gradient(180deg,#f5f7ff,#ffffff);
+    font-family: "Segoe UI", sans-serif;
+}
+
+.page{
+    padding:30px;
+    animation:fadeIn .6s ease;
+}
+
+h1{
+    margin-bottom:25px;
+}
+
+/* ===== GRID ===== */
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:22px;
+    margin-bottom:30px;
+}
+
+/* ===== CARD ===== */
+.card{
+    background:white;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 16px 40px rgba(0,0,0,.08);
+    position:relative;
+    cursor:pointer;
+    transition:.35s;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 24px 55px rgba(79,70,229,.25);
+}
+
+.card.active{
+    outline:3px solid #4f46e5;
+}
+
+.card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:6px;
+    border-radius:18px 18px 0 0;
+}
+
+/* ===== YEAR COLORS ===== */
+.year-1::before{background:#3b82f6;}
+.year-2::before{background:#10b981;}
+.year-3::before{background:#f59e0b;}
+.year-4::before{background:#8b5cf6;}
+
+/* ===== BRANCH COLORS ===== */
+.branch-cse::before{background:#6366f1;}
+.branch-ece::before{background:#f97316;}
+.branch-eee::before{background:#ef4444;}
+.branch-mech::before{background:#64748b;}
+.branch-civil::before{background:#22c55e;}
+
+.card h3{
+    margin:0;
+    font-size:16px;
+}
+
+.count{
+    font-size:34px;
+    font-weight:700;
+    color:#4f46e5;
+    margin-top:10px;
+}
+
+/* ===== SORT ===== */
+.controls{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:12px;
+}
+
+select{
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid #d1d5db;
+}
+
+/* ===== TABLE ===== */
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 16px 40px rgba(0,0,0,.08);
+}
+
+thead{
+    background:linear-gradient(90deg,#4f46e5,#6366f1);
+    color:white;
+}
+
+th,td{
+    padding:16px;
+}
+
+tbody tr:hover{
+    background:#eef2ff;
+}
+
+.empty{
+    text-align:center;
+    padding:25px;
+    color:#6b7280;
+}
+
+@keyframes fadeIn{
+    from{opacity:0;transform:translateY(12px)}
+    to{opacity:1;transform:translateY(0)}
+}
+</style>
+
+<div class="page">
+<h1>Volunteers</h1>
+
+<!-- ===== YEAR CARDS ===== -->
+<div class="cards">
+    <div class="card year-1 year-card" data-year="1st Year">🎓 1st Year<div class="count">{{ year_counts.1 }}</div></div>
+    <div class="card year-2 year-card" data-year="2nd Year">📘 2nd Year<div class="count">{{ year_counts.2 }}</div></div>
+    <div class="card year-3 year-card" data-year="3rd Year">📗 3rd Year<div class="count">{{ year_counts.3 }}</div></div>
+    <div class="card year-4 year-card" data-year="4th Year">🏁 Final Year<div class="count">{{ year_counts.4 }}</div></div>
+</div>
+
+<!-- ===== BRANCH CARDS ===== -->
+<div class="cards">
+    <div class="card branch-card branch-cse" data-branch="CSE">💻 CSE<div class="count">{{ branch_counts.CSE }}</div></div>
+    <div class="card branch-card branch-ece" data-branch="ECE">📡 ECE<div class="count">{{ branch_counts.ECE }}</div></div>
+    <div class="card branch-card branch-eee" data-branch="EEE">⚡ EEE<div class="count">{{ branch_counts.EEE }}</div></div>
+    <div class="card branch-card branch-mech" data-branch="MECH">🔧 MECH<div class="count">{{ branch_counts.MECH }}</div></div>
+    <div class="card branch-card branch-civil" data-branch="CIVIL">🏗️ CIVIL<div class="count">{{ branch_counts.CIVIL }}</div></div>
+</div>
+
+<!-- ===== SORT ===== -->
+<div class="controls">
+<select id="sortSelect">
+    <option value="roll">Sort by Roll Number</option>
+    <option value="name">Sort by Name</option>
+</select>
+</div>
+
+<!-- ===== TABLE ===== -->
+<table id="volunteerTable">
+<thead>
+<tr>
+<th>Roll No</th>
+<th>Name</th>
+<th>Email</th>
+<th>Year</th>
+<th>Branch</th>
+</tr>
+</thead>
+<tbody>
+{% for v in volunteers %}
+<tr data-year="{{ v.year }}" data-branch="{{ v.department }}">
+<td>{{ v.student_id }}</td>
+<td>{{ v.full_name }}</td>
+<td>{{ v.user.email }}</td>
+<td>{% if v.year == "4th Year" %}Final Year{% else %}{{ v.year }}{% endif %}</td>
+<td>{{ v.department }}</td>
+</tr>
+{% empty %}
+<tr id="emptyRow"><td colspan="5" class="empty">No volunteers found</td></tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+
+<script>
+let selectedYear = null;
+let selectedBranch = null;
+
+const yearCards = document.querySelectorAll(".year-card");
+const branchCards = document.querySelectorAll(".branch-card");
+const rows = document.querySelectorAll("#volunteerTable tbody tr");
+
+/* ---------- FILTER FUNCTION ---------- */
+function filterTable() {
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowYear = row.dataset.year;
+        const rowBranch = row.dataset.branch;
+
+        let show = true;
+
+        if (selectedYear && rowYear !== selectedYear) show = false;
+        if (selectedBranch && rowBranch !== selectedBranch) show = false;
+
+        row.style.display = show ? "" : "none";
+        if (show) visibleCount++;
+    });
+
+    toggleEmptyMessage(visibleCount);
+}
+
+/* ---------- EMPTY MESSAGE ---------- */
+function toggleEmptyMessage(count) {
+    let emptyRow = document.getElementById("noDataRow");
+
+    if (!emptyRow) {
+        emptyRow = document.createElement("tr");
+        emptyRow.id = "noDataRow";
+        emptyRow.innerHTML = `
+            <td colspan="5" style="text-align:center;color:#6b7280;">
+                No volunteers found
+            </td>`;
+        document.querySelector("#volunteerTable tbody").appendChild(emptyRow);
+    }
+
+    emptyRow.style.display = count === 0 ? "" : "none";
+}
+
+/* ---------- YEAR CLICK ---------- */
+yearCards.forEach(card => {
+    card.addEventListener("click", () => {
+        yearCards.forEach(c => c.classList.remove("active"));
+        branchCards.forEach(c => c.classList.remove("active"));
+
+        card.classList.add("active");
+        selectedYear = card.dataset.year;
+        selectedBranch = null;
+
+        filterTable();
+    });
+});
+
+/* ---------- BRANCH CLICK ---------- */
+branchCards.forEach(card => {
+    card.addEventListener("click", () => {
+        if (!selectedYear) {
+            alert("Please select a year first");
+            return;
+        }
+
+        branchCards.forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+
+        selectedBranch = card.dataset.branch;
+        filterTable();
+    });
+});
+
+/* ---------- SORT ---------- */
+document.getElementById("sortSelect").addEventListener("change", function () {
+    const tbody = document.querySelector("#volunteerTable tbody");
+    const rowsArray = Array.from(rows);
+
+    rowsArray.sort((a, b) => {
+        if (this.value === "name") {
+            return a.children[1].innerText.localeCompare(b.children[1].innerText);
+        } else {
+            return a.children[0].innerText.localeCompare(b.children[0].innerText);
+        }
+    });
+
+    rowsArray.forEach(r => tbody.appendChild(r));
+});
+
+/* ---------- RESET ON PAGE LOAD ---------- */
+filterTable();
+</script>
+
+
+{% endblock %}

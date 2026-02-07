@@ -1,15 +1,25 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
 
 <h2>Organization Dashboard</h2>
 
-<a href="/organization/create-service/">
+<a href="{% url 'create_service' %}">
     <button>Create New Work</button>
 </a>
 
+<hr>
+
 <ul>
 {% for s in services %}
-    <li>{{ s.title }} — {{ s.status }}</li>
+    <li>
+        <b>{{ s.title }}</b> — {{ s.status }}
+
+        {% if s.status == "APPROVED" %}
+            | <a href="{% url 'org_view_applicants' s.id %}">
+                View Applicants
+              </a>
+        {% endif %}
+    </li>
 {% empty %}
     <li>No services created yet</li>
 {% endfor %}

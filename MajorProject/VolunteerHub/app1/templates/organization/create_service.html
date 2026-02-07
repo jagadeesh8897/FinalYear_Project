@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body {
+    background: linear-gradient(180deg,#f0fdf4,#ffffff);
+    font-family: "Segoe UI", sans-serif;
+}
+
+.page {
+    max-width: 900px;
+    margin: auto;
+    padding: 40px;
+    animation: fadeIn 0.6s ease;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 35px;
+    box-shadow: 0 18px 45px rgba(0,0,0,0.08);
+}
+
+label {
+    font-weight: 600;
+    margin-top: 18px;
+    display: block;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 14px;
+    margin-top: 8px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    font-size: 15px;
+}
+
+textarea {
+    resize: none;
+    height: 110px;
+}
+
+button {
+    margin-top: 30px;
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(90deg,#22c55e,#16a34a);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(34,197,94,0.4);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="page">
+    <h1>📝 Create New Service</h1>
+
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data">
+
+            {% csrf_token %}
+             
+            
+
+
+            <label>📌 Service Title</label>
+            <input type="text" name="title" required>
+
+            <label>📝 Description</label>
+            <textarea name="description" required></textarea>
+
+            <label>📍 Location</label>
+            <input type="text" name="location" required>
+
+            <label>📅 Date</label>
+            <input type="date" name="date" required>
+
+            <label>👥 Required Volunteers</label>
+            <input type="number" name="required_volunteers" required>
+
+            <!-- AUTHORIZATION LETTER -->
+<label>📄 Authorization Letter (PDF / Image)</label>
+<input type="file"
+       name="authorization_letter"
+       accept=".pdf,.jpg,.jpeg,.png"
+       required>
+
+
+            <button type="submit">🚀 Submit for Admin Approval</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

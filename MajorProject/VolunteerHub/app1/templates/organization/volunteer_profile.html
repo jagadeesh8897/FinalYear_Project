@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Volunteer Profile</h2>
+
+<p><b>Name:</b> {{ volunteer.full_name }}</p>
+<p><b>Email:</b> {{ volunteer.user.email }}</p>
+<p><b>Year:</b> {{ volunteer.year }}</p>
+<p><b>Department:</b> {{ volunteer.department }}</p>
+<p><b>Skills:</b> {{ volunteer.skills }}</p>
+<p><b>Attendance:</b> {{ volunteer.attendance }}%</p>
+<p><b>Rating:</b> {{ volunteer.rating }}</p>
+
+<a href="javascript:history.back()">← Back to Applicants</a>
+
+{% endblock %}
