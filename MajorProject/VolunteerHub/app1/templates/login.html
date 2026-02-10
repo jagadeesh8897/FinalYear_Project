@@ -138,7 +138,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
             else if (data.role === "ORGANIZATION")
                 window.location.href = "/organization/dashboard/";
             else
-                window.location.href = "/admin-panel/dashboard/";
+                window.location.href = "/admin_panel/dashboard/";
         } else {
             errorBox.innerText = data.message || "Login failed";
             errorBox.style.display = "block";

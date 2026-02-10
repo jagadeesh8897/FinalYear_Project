@@ -98,6 +98,21 @@ body{ background:#f4f6fb; }
     float:right;
     cursor:pointer;
     font-size:20px;
+.status.PENDING {
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.status.APPROVED {
+    background:#dcfce7;
+    color:#166534;
+}
+
+.status.REJECTED {
+    background:#fee2e2;
+    color:#991b1b;
+}
+
 }
 </style>
 
@@ -143,34 +158,41 @@ body{ background:#f4f6fb; }
         </div>
 
         <!-- RIGHT -->
-        <div style="display:flex; justify-content:space-between;">
+        <div style="display:flex; justify-content:space-between; width:100%;">
 
-            <div class="actions">
-                <form method="post"
-                      action="{% url 'org_approve_volunteer' app.id %}">
-                    {% csrf_token %}
-                    <button class="btn approve">Approve</button>
-                </form>
+    {% if app.status == "APPLIED" %}
+    <!-- APPROVE / REJECT -->
+    <div class="actions">
+        <form method="post"
+              action="{% url 'org_approve_volunteer' app.id %}">
+            {% csrf_token %}
+            <button class="btn approve">Approve</button>
+        </form>
 
-                <form method="post"
-                      action="{% url 'org_reject_volunteer' app.id %}">
-                    {% csrf_token %}
-                    <button class="btn reject">Reject</button>
-                </form>
-            </div>
+        <form method="post"
+              action="{% url 'org_reject_volunteer' app.id %}">
+            {% csrf_token %}
+            <button class="btn reject">Reject</button>
+        </form>
+    </div>
+    {% endif %}
 
-            <div class="side">
-                <h4>Attendance</h4>
-                <input type="checkbox" disabled>
-                <p class="meta">Available after approval</p>
+    {% if app.status == "SELECTED" %}
+    <!-- ATTENDANCE + RATING -->
+    <div class="side" style="opacity:1;">
+        <h4>Attendance</h4>
+        <input type="checkbox">
 
-                <h4>Rating</h4>
-                <div class="stars">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                </div>
-            </div>
-
+        <h4>Rating</h4>
+        <div class="stars">
+            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
         </div>
+    </div>
+    {% endif %}
+
+</div>
+
+
     </div>
 </div>
 

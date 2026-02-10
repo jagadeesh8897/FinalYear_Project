@@ -1,28 +1,39 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/organization_dashboard.css' %}">
 
-<h2>Organization Dashboard</h2>
+<div class="dashboard-container">
 
-<a href="{% url 'create_service' %}">
-    <button>Create New Work</button>
-</a>
+    <div class="dashboard-header">
+        <h2>Organization Dashboard</h2>
+        <a href="{% url 'create_service' %}" class="btn-primary">
+            + Create New Work
+        </a>
+    </div>
 
-<hr>
+    <div class="services-grid">
+        {% for s in services %}
+        <div class="service-card">
+            <div class="card-header">
+                <h3>{{ s.title }}</h3>
+                <span class="status {{ s.status|lower }}">
+                    {{ s.status }}
+                </span>
+            </div>
 
-<ul>
-{% for s in services %}
-    <li>
-        <b>{{ s.title }}</b> — {{ s.status }}
+            {% if s.status == "APPROVED" %}
+            <a href="{% url 'org_view_applicants' s.id %}" class="view-link">
+                View Applicants →
+            </a>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="empty-text">No services created yet 🚀</p>
+        {% endfor %}
+    </div>
 
-        {% if s.status == "APPROVED" %}
-            | <a href="{% url 'org_view_applicants' s.id %}">
-                View Applicants
-              </a>
-        {% endif %}
-    </li>
-{% empty %}
-    <li>No services created yet</li>
-{% endfor %}
-</ul>
+</div>
 
 {% endblock %}
