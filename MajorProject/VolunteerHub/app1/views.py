@@ -455,6 +455,7 @@ def validate_password(password):
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.contrib import messages
+import re
 @login_required
 def register_view(request):
     if request.method != "POST":
@@ -474,19 +475,62 @@ def register_view(request):
     # ---------- VALIDATIONS ----------
     if password != rpassword:
         messages.warning(request, "Passwords do not match")
-        return render(request, "register.html")
+        return render(request, "register.html", {
+            "form_data": request.POST,
+            "selected_role": role
+        })
 
     if role == "VOLUNTEER" and not email.endswith("@srit.ac.in"):
         messages.warning(request, "Volunteer email must end with @srit.ac.in")
-        return render(request, "register.html")
+        return render(request, "register.html", {
+            "form_data": request.POST,
+            "selected_role": role
+        })
+    if role == "VOLUNTEER":
+        if VolunteerProfile.objects.filter(student_id=student_id).exists():
+            messages.warning(request, "Student ID already registered")
+            return render(request, "register.html", {
+                "form_data": request.POST,
+                "selected_role": role
+            })
+        rollno = request.POST.get("student_id").lower()
+
+        pattern = r'^\d{2}4g\d{1}a\d{2}[a-zA-Z0-9]{2}$'
+
+        if not re.match(pattern, rollno):
+            messages.error(
+                request,
+                "Invalid roll number format. Example: 224G1A0530"
+            )
+            return render(request, "register.html", {
+                "form_data": request.POST,
+                "selected_role": role
+            })
+        email_prefix = email.split("@")[0]
+
+        if email_prefix != rollno:
+            messages.error(
+                request,
+                "Email must match your roll number"
+            )
+            return render(request, "register.html", {
+                "form_data": request.POST,
+                "selected_role": role
+            })
 
     if role == "ORGANIZATION" and not email.endswith("@gmail.com"):
         messages.warning(request, "Organization email must end with @gmail.com")
-        return render(request, "register.html")
+        return render(request, "register.html", {
+            "form_data": request.POST,
+            "selected_role": role
+        })
 
     if User.objects.filter(username=email).exists():
         messages.warning(request, "Email already registered")
-        return render(request, "register.html")
+        return render(request, "register.html", {
+            "form_data": request.POST,
+            "selected_role": role
+        })
 
     # ---------- CREATE USER ----------
     with transaction.atomic():
