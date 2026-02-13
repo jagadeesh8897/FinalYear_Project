@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -11,6 +11,8 @@ from app1.models import Service
 from datetime import date
 from django.utils.timezone import now
 from .models import Organization, Service
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 from datetime import datetime, date, timedelta
 
@@ -456,7 +458,6 @@ from django.db import transaction
 from django.shortcuts import render, redirect
 from django.contrib import messages
 import re
-@login_required
 def register_view(request):
     if request.method != "POST":
         return render(request, "register.html")
@@ -587,6 +588,10 @@ def register_view(request):
             )
 
     return redirect("login")
+
+def logout_view(request):
+    logout(request)  # destroys session
+    return redirect('login')
 
 @login_required
 def admin_active_works(request):
@@ -955,48 +960,44 @@ def volunteer_applications(request):
 )
 
 
+from django.urls import reverse
+from django.http import HttpResponseRedirect
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import VolunteerProfile
+
 @login_required
 def volunteer_profile(request):
-    if request.user.role != "VOLUNTEER":
-        return redirect("login")
-
-    profile, created = VolunteerProfile.objects.get_or_create(
-        user=request.user,
-        defaults={
-            "full_name": request.user.email.split("@")[0],
-            "phone": "",
-            "student_id": "",
-            "department": "",
-            "year": "",
-            "skills": ""
-        }
-    )
+    profile = VolunteerProfile.objects.get(user=request.user)
 
     if request.method == "POST":
-        profile.full_name = request.POST.get("full_name", profile.full_name)
-        profile.phone = request.POST.get("phone", profile.phone)
-        profile.skills = request.POST.get("skills", profile.skills)
 
-        # ✅ SAVE PHOTO
-        if "photo" in request.FILES:
-            profile.photo = request.FILES["photo"]
+        # Basic fields
+        profile.full_name = request.POST.get("full_name")
+        profile.phone = request.POST.get("phone")
+        profile.year = request.POST.get("year")
 
-        # ✅ SAVE COVER PHOTO
-        if "cover_photo" in request.FILES:
-            profile.cover_photo = request.FILES["cover_photo"]
+        # Skills (hidden input)
+        skills = request.POST.get("skills")
+        if skills:
+            profile.skills = skills
+
+        # Save images if uploaded
+        if request.FILES.get("photo"):
+            profile.photo = request.FILES.get("photo")
+
+        if request.FILES.get("cover_photo"):
+            profile.cover_photo = request.FILES.get("cover_photo")
 
         profile.save()
 
-        return redirect("volunteer_profile")
+        return redirect("/volunteer/profile/?updated=true")
 
-    return render(
-    request,
-    "volunteer/profile.html",
-    {
-        "profile": profile,
-        "active_page": "profile"
-    }
-)
+    return render(request, "volunteer/profile.html", {"profile": profile})
+
+
+
 
 @login_required
 def admin_approved_organizations(request):

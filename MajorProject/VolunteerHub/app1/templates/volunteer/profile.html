@@ -7,6 +7,47 @@
     max-width:1100px;
     margin:auto;
 }
+/* BUTTON GROUP */
+.btn-group{
+    display:flex;
+    gap:12px;
+}
+
+/* SMOOTH EDIT EFFECT */
+.editable{
+    transition: all 0.3s ease;
+}
+
+.editable.enabled{
+    border:2px solid #4f46e5;
+    background:#eef2ff;
+}
+
+/* CANCEL BUTTON */
+#cancelBtn{
+    background:#ef4444;
+}
+
+/* TOAST MESSAGE */
+.toast{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#10b981;
+    color:white;
+    padding:14px 20px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    opacity:0;
+    transform:translateY(-20px);
+    transition:all 0.4s ease;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translateY(0);
+}
+
 
 /* COVER */
 .cover{
@@ -92,6 +133,26 @@ button{
     border-radius:12px;
     cursor:pointer;
 }
+    .skills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.skill-tag{
+    padding:8px 14px;
+    border-radius:20px;
+    background:#e5e7eb;
+    cursor:pointer;
+    transition:0.3s ease;
+    font-size:14px;
+}
+
+.skill-tag.active{
+    background:#4f46e5;
+    color:white;
+}
+
 </style>
 
 <form method="POST" enctype="multipart/form-data" id="profileForm">
@@ -128,28 +189,60 @@ button{
 
         <!-- LEFT -->
         <div class="card">
-            <h2>Basic Info</h2>
+    <h2>Basic Info</h2>
 
-            <label>Full Name</label>
-            <input name="full_name"
-                   value="{{ profile.full_name }}"
-                   readonly
-                   class="readonly editable">
+    <label>Full Name</label>
+    <input name="full_name"
+           value="{{ profile.full_name }}"
+           disabled
+           class="editable">
 
-            <label>Phone</label>
-            <input name="phone"
-                   value="{{ profile.phone }}"
-                   readonly
-                   class="readonly editable">
+    <label>Phone</label>
+    <input name="phone"
+           value="{{ profile.phone }}"
+           disabled
+           class="editable">
 
-            <label>Skills</label>
-            <textarea name="skills"
-                      readonly
-                      class="readonly editable">{{ profile.skills }}</textarea>
+    <label>Year</label><br>
+    <select name="year" disabled class="editable">
+        <option value="1st Year" {% if profile.year == "1st Year" %}selected{% endif %}>1st Year</option>
+        <option value="2nd Year" {% if profile.year == "2nd Year" %}selected{% endif %}>2nd Year</option>
+        <option value="3rd Year" {% if profile.year == "3rd Year" %}selected{% endif %}>3rd Year</option>
+        <option value="4th Year" {% if profile.year == "4th Year" %}selected{% endif %}>4th Year</option>
+    </select><br><br>
 
-            <br><br>
-            <button type="submit">Save Changes</button>
-        </div>
+    <label>Skills</label>
+
+<!-- NORMAL TEXT MODE -->
+<p id="skillsText">{{ profile.skills }}</p>
+
+<!-- EDIT MODE -->
+<input type="hidden" name="skills" id="skillsInput">
+
+<div class="skills" id="skillsBox" style="display:none;">
+    <span class="skill-tag" onclick="toggleSkill(this)">Teaching</span>
+    <span class="skill-tag" onclick="toggleSkill(this)">Event Management</span>
+    <span class="skill-tag" onclick="toggleSkill(this)">Technical</span>
+    <span class="skill-tag" onclick="toggleSkill(this)">Healthcare</span>
+    <span class="skill-tag" onclick="toggleSkill(this)">Environment</span>
+    <span class="skill-tag" onclick="toggleSkill(this)">Social Work</span>
+</div>
+
+
+    <br><br>
+
+    <br><br>
+
+<div class="btn-group">
+    <button type="button" id="editBtn">Edit Profile</button>
+    <button type="submit" id="saveBtn" style="display:none;">Save Changes</button>
+    <button type="button" id="cancelBtn" style="display:none;">Cancel</button>
+</div>
+
+<div id="toast" class="toast">Profile Updated Successfully ✅</div>
+
+</div>
+
 
         <!-- RIGHT -->
         <div class="card">
@@ -166,22 +259,156 @@ button{
 
 <!-- ================= SCRIPT ================= -->
 <script>
-// AUTO SUBMIT FOR IMAGES
-document.getElementById("photoInput").addEventListener("change", () => {
-    document.getElementById("profileForm").submit();
-});
-document.getElementById("coverInput").addEventListener("change", () => {
-    document.getElementById("profileForm").submit();
+
+// =========================
+// ELEMENTS
+// =========================
+const editBtn = document.getElementById("editBtn");
+const saveBtn = document.getElementById("saveBtn");
+const cancelBtn = document.getElementById("cancelBtn");
+const fields = document.querySelectorAll(".editable");
+const toast = document.getElementById("toast");
+
+const skillsText = document.getElementById("skillsText");
+const skillsBox = document.getElementById("skillsBox");
+const skillsInput = document.getElementById("skillsInput");
+
+let originalValues = {};
+let selectedSkills = [];
+
+// =========================
+// INITIAL SKILL SETUP
+// =========================
+if (skillsText && skillsText.innerText.trim() !== "") {
+    selectedSkills = skillsText.innerText.split(",");
+}
+
+// Mark active skills initially
+document.querySelectorAll(".skill-tag").forEach(tag => {
+    if (selectedSkills.includes(tag.innerText.trim())) {
+        tag.classList.add("active");
+    }
 });
 
-// CLICK TO EDIT
-document.querySelectorAll(".editable").forEach(field => {
-    field.addEventListener("click", () => {
-        field.removeAttribute("readonly");
-        field.classList.remove("readonly");
-        field.focus();
+// =========================
+// IMAGE AUTO SUBMIT
+// =========================
+const photoInput = document.getElementById("photoInput");
+const coverInput = document.getElementById("coverInput");
+
+if (photoInput) {
+    photoInput.addEventListener("change", () => {
+        document.getElementById("profileForm").submit();
     });
+}
+
+if (coverInput) {
+    coverInput.addEventListener("change", () => {
+        document.getElementById("profileForm").submit();
+    });
+}
+
+// =========================
+// EDIT MODE
+// =========================
+editBtn.addEventListener("click", () => {
+
+    // Save original values
+    fields.forEach(field => {
+        originalValues[field.name] = field.value;
+        field.removeAttribute("disabled");
+        field.classList.add("enabled");
+    });
+
+    // Show skill buttons
+    if (skillsText && skillsBox) {
+        skillsText.style.display = "none";
+        skillsBox.style.display = "flex";
+    }
+
+    editBtn.style.display = "none";
+    saveBtn.style.display = "inline-block";
+    cancelBtn.style.display = "inline-block";
 });
+
+// =========================
+// CANCEL EDIT
+// =========================
+cancelBtn.addEventListener("click", () => {
+
+    // Restore original values
+    fields.forEach(field => {
+        field.value = originalValues[field.name];
+        field.setAttribute("disabled", true);
+        field.classList.remove("enabled");
+    });
+
+    // Restore skill UI
+    if (skillsText && skillsBox) {
+        skillsText.style.display = "block";
+        skillsBox.style.display = "none";
+    }
+
+    // Reset active skill selection
+    document.querySelectorAll(".skill-tag").forEach(tag => {
+        tag.classList.remove("active");
+        if (selectedSkills.includes(tag.innerText.trim())) {
+            tag.classList.add("active");
+        }
+    });
+
+    editBtn.style.display = "inline-block";
+    saveBtn.style.display = "none";
+    cancelBtn.style.display = "none";
+});
+
+// =========================
+// SKILL TOGGLE
+// =========================
+function toggleSkill(el) {
+    el.classList.toggle("active");
+}
+
+// =========================
+// BEFORE SAVE (FORM SUBMIT)
+// =========================
+document.getElementById("profileForm").addEventListener("submit", function () {
+
+    // Collect selected skills
+    const activeSkills = [];
+    document.querySelectorAll(".skill-tag.active").forEach(tag => {
+        activeSkills.push(tag.innerText.trim());
+    });
+
+    // Set hidden input value
+    if (skillsInput) {
+        skillsInput.value = activeSkills.join(",");
+    }
+
+});
+
+// =========================
+// TOAST MESSAGE AFTER SAVE
+// =========================
+window.onload = function () {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get("updated") === "true") {
+
+        if (toast) {
+            toast.classList.add("show");
+
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        // Remove query param from URL (clean URL)
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+};
+
 </script>
+
 
 {% endblock %}
