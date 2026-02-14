@@ -97,7 +97,7 @@
 
                 <!-- SKILLS -->
 
-                <label class="skill-label"> Skills (Select all that apply)</label>
+                <label class="skill-label" id="skillsLabel" > Skills (Select all that apply)</label>
 
 
                 <div class="skills" id="skillsBox">
@@ -111,7 +111,7 @@
 
                 <!-- 🔹 CHANGE 2: ORGANIZATION LETTER UPLOAD -->
                 <div id="orgLetterBox" style="display:none;">
-                    <label style="font-weight:600;margin-top:10px;display:block;">
+                    <label class="skill-label">
                         Upload Organization Verification Letter (PDF / Image)
                     </label>
                     <input type="file"
@@ -162,6 +162,8 @@ function updateUI() {
 
     document.getElementById("year").style.display = isVolunteer ? "block" : "none";
     document.getElementById("skillsBox").style.display = isVolunteer ? "block" : "none";
+    document.getElementById("skillsLabel").style.display = isVolunteer ? "block" : "none";
+
     document.getElementById("department").style.display = isVolunteer ? "block" : "none";
     document.getElementById("student_id").style.display = isVolunteer ? "block" : "none";
 
