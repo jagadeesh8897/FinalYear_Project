@@ -20,15 +20,15 @@ urlpatterns = [
     path('volunteer/apply/<int:service_id>/', views.volunteer_apply_service, name='volunteer_apply_service'),
     path('volunteer/applications/', views.volunteer_applications, name='volunteer_applications'),
     path('volunteer/profile/', views.volunteer_profile, name='volunteer_profile'),
+    path("volunteer/attendance/", views.volunteer_attendance, name="volunteer_attendance"),
+
 
     # ORGANIZATION
     path('organization/dashboard/', views.organization_dashboard_page, name='organization_dashboard'),
     path('organization/create-service/', views.organization_create_service, name='create_service'),
-path(
-    "organization/service/<int:service_id>/applications/",
-    views.organization_view_applicants,
-    name="org_view_applicants"
-),
+    path("organization/service/<int:service_id>/applications/",views.organization_view_applicants,name="org_view_applicants"),
+    path("attendance/bulk/<int:service_id>/",views.mark_bulk_attendance,name="mark_bulk_attendance"),
+
 
     path('organization/service/<int:service_id>/select/', views.org_select_volunteers, name='org_select_volunteers'),
     path('organization/volunteer/<int:volunteer_id>/profile/', views.org_view_volunteer_profile, name='org_view_volunteer_profile'),
@@ -47,4 +47,17 @@ path(
     path('admin_panel/complete-service/<int:service_id>/', views.admin_mark_service_completed, name='admin_complete_service'),
     path('admin_panel/assign/<int:service_id>/', views.admin_assign_volunteers_page, name='admin_assign_page'),
     path('admin_panel/assign-confirm/<int:service_id>/', views.assign_volunteers, name='assign_volunteers'),
+# ADMIN ORG APPROVAL ACTIONS
+path(
+    'admin_panel/approve-org/<int:org_id>/',
+    views.approve_organization,
+    name='approve_org'
+),
+
+path(
+    'admin_panel/reject-org/<int:org_id>/',
+    views.reject_organization,
+    name='reject_org'
+),
+
 ]

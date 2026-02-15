@@ -35,7 +35,7 @@ class VolunteerProfile(models.Model):
     @property
     def skill_list(self):
         return [s.strip() for s in self.skills.split(",")] if self.skills else []
-    
+
     def __str__(self):
         return self.full_name
 
@@ -53,6 +53,7 @@ class Organization(models.Model):
     def __str__(self):
         return self.organization_name
 
+
 class Service(models.Model):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
@@ -63,7 +64,9 @@ class Service(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     location = models.CharField(max_length=100)
-    date = models.DateField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+
     required_volunteers = models.IntegerField()
 
     organization = models.ForeignKey(
@@ -92,7 +95,6 @@ class Service(models.Model):
         return self.title
 
 
-
 class Application(models.Model):
     STATUS_CHOICES = [
         ('APPLIED', 'Applied'),
@@ -108,3 +110,10 @@ class Application(models.Model):
     review = models.TextField(blank=True)
 
 
+class Attendance(models.Model):
+    application = models.ForeignKey('Application', on_delete=models.CASCADE)
+    date = models.DateField()
+    is_present = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('application', 'date')

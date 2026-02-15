@@ -1,0 +1,119 @@
+{% extends "base_volunteer.html" %}
+{% block content %}
+<style>
+.attendance-card{
+    background:white;
+    border-radius:18px;
+    padding:25px;
+    box-shadow:0 18px 40px rgba(0,0,0,.08);
+    margin-top:20px;
+}
+
+.attendance-table{
+    width:100%;
+    border-collapse:collapse;
+    overflow:hidden;
+}
+
+.attendance-table th{
+    background:linear-gradient(90deg,#4f46e5,#6366f1);
+    color:white;
+    padding:16px;
+    text-align:left;
+    font-weight:600;
+}
+
+.attendance-table td{
+    padding:16px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.attendance-table tr:hover{
+    background:#eef2ff;
+}
+
+/* ===== BADGES ===== */
+
+.badge{
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:600;
+    display:inline-block;
+}
+
+.high{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.medium{
+    background:#fde68a;
+    color:#92400e;
+}
+
+.low{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.progress-bar{
+    width:100%;
+    height:8px;
+    background:#e5e7eb;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#22c55e,#16a34a);
+}
+</style>
+
+<div class="attendance-card">
+    <h2>My Attendance</h2>
+
+    <table class="attendance-table">
+        <tr>
+            <th>Event</th>
+            <th>Total Days</th>
+            <th>Present</th>
+            <th>Attendance</th>
+            <th>Status</th>
+        </tr>
+
+        {% for item in attendance_data %}
+        <tr>
+            <td>{{ item.service.title }}</td>
+            <td>{{ item.total_days }}</td>
+            <td>{{ item.present_days }}</td>
+
+            <td>
+                <div class="progress-bar">
+                    <div class="progress-fill"
+                         style="width: {{ item.percentage }}%;">
+                    </div>
+                </div>
+                <small>{{ item.percentage }}%</small>
+            </td>
+
+            <td>
+                {% if item.percentage >= 75 %}
+                    <span class="badge high">Excellent</span>
+                {% elif item.percentage >= 50 %}
+                    <span class="badge medium">Average</span>
+                {% else %}
+                    <span class="badge low">Low</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No attendance records yet</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

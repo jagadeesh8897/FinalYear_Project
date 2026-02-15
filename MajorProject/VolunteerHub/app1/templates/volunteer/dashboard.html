@@ -75,7 +75,14 @@
 
     <div class="stat-card blue">
         <div class="icon">📅</div>
-        <h2>N/A</h2>
+        <h2 class="
+{% if overall_attendance >= 75 %}text-green
+{% elif overall_attendance >= 50 %}text-yellow
+{% else %}text-red
+{% endif %}
+">
+{{ overall_attendance }}%
+</h2>
         <p>Attendance Rate</p>
     </div>
 
@@ -114,7 +121,8 @@
 <p><strong>Email:</strong> {{ s.organization.user.email }}</p>
 
 <p>📍 {{ s.location }}</p>
-<p>📅 {{ s.date }}</p>
+<p>📅 {{ s.start_date }}</p>
+<p>📅 {{ s.end_date }}</p>
 
 
 

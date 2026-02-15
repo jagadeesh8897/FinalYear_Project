@@ -2,225 +2,209 @@
 {% block content %}
 
 <style>
-body{ background:#f4f6fb; }
+    body{ background:#f4f6fb; }
 
-.applicant-card{
-    background:#e5e7eb;
-    border-radius:26px;
-    padding:28px;
-    margin-bottom:30px;
-}
+    .filter-bar{
+        margin:20px 0;
+    }
 
-.status{
-    background:#dbeafe;
-    color:#1e40af;
-    padding:6px 14px;
-    border-radius:20px;
-    font-size:13px;
-    display:inline-block;
-    margin-bottom:12px;
-}
+    .filter-btn{
+        padding:10px 18px;
+        border:none;
+        border-radius:18px;
+        margin-right:10px;
+        cursor:pointer;
+        font-weight:600;
+    }
 
-.content{
-    display:grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap:30px;
-}
+    table{
+        width:100%;
+        border-collapse:collapse;
+        background:white;
+        border-radius:12px;
+        overflow:hidden;
+    }
 
-.name{
-    font-size:22px;
-    font-weight:700;
-}
+    th, td{
+        padding:12px;
+        border-bottom:1px solid #eee;
+        text-align:left;
+    }
 
-.meta{
-    color:#6b7280;
-    margin:6px 0 12px;
-}
+    th{
+        background:#111827;
+        color:white;
+    }
 
-.skills span{
-    display:inline-block;
-    background:#d1d5db;
-    color:#111827;
-    padding:6px 14px;
-    border-radius:20px;
-    font-size:13px;
-    margin:4px 6px 0 0;
-}
+    .hidden{
+        display:none;
+    }
 
-.actions{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-.btn{
-    width:150px;
-    padding:8px 0;
-    border-radius:20px;
-    border:none;
-    font-size:14px;
-    font-weight:600;
-    cursor:pointer;
-}
-
-.approve{ background:#22c55e; color:white; }
-.reject{ background:#ef4444; color:white; }
-
-.side{
-    text-align:right;
-    opacity:.4;
-}
-
-.stars span{
-    font-size:22px;
-    color:#d1d5db;
-}
-
-/* MODAL */
-.modal{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.45);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
-}
-
-.modal-box{
-    background:white;
-    width:420px;
-    border-radius:18px;
-    padding:24px;
-}
-
-.close{
-    float:right;
-    cursor:pointer;
-    font-size:20px;
-.status.PENDING {
-    background:#fef3c7;
-    color:#92400e;
-}
-
-.status.APPROVED {
-    background:#dcfce7;
-    color:#166534;
-}
-
-.status.REJECTED {
-    background:#fee2e2;
-    color:#991b1b;
-}
-
-}
+    .submit-row{
+        margin-top:15px;
+    }
 </style>
 
-<h1>Applicants for {{ service.title }}</h1>
-<p class="subtitle">Approve volunteers, mark attendance & rate</p>
+<h1>Applicants — {{ service.title }}</h1>
 
-{% if applications %}
-{% for app in applications %}
+<!-- ================= FILTER BUTTONS ================= -->
 
-<div class="applicant-card">
+<div class="filter-bar">
+    <button class="filter-btn" onclick="showTable('selected')">Selected</button>
+    <button class="filter-btn" onclick="showTable('applied')">Applied</button>
+    <button class="filter-btn" onclick="showTable('rejected')">Rejected</button>
+</div>
 
-    <span class="status">{{ app.status }}</span>
+<!-- ================= SELECTED TABLE ================= -->
 
-    <div class="content">
+<div id="selected_table">
 
-        <!-- LEFT -->
-        <div>
-            <div class="name">{{ app.volunteer.full_name }}</div>
+    <h2>Selected Volunteers</h2>
 
-            <div class="meta">
-                {{ app.volunteer.year }} · {{ app.volunteer.department }}
-            </div>
+    {% if selected_apps %}
 
-            <!-- SKILLS -->
-            <div class="skills">
-                {% for skill in app.skill_list %}
-                    <span>{{ skill }}</span>
-                {% empty %}
-                    <span>No skills added</span>
-                {% endfor %}
-            </div>
+    <form method="post" action="{% url 'mark_bulk_attendance' service.id %}">
+        {% csrf_token %}
 
-            <br>
-            <a href="javascript:void(0)"
-               onclick="openProfile(
-                   '{{ app.volunteer.full_name }}',
-                   '{{ app.volunteer.year }}',
-                   '{{ app.volunteer.department }}',
-                   '{{ app.volunteer.skills }}'
-               )">
-               View Profile →
-            </a>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Year</th>
+                <th>Department</th>
+                <th>Attendance</th>
+            </tr>
+
+            {% for app in selected_apps %}
+            <tr>
+                <td>{{ app.volunteer.full_name }}</td>
+                <td>{{ app.volunteer.year }}</td>
+                <td>{{ app.volunteer.department }}</td>
+
+                <td>
+
+                    {% if event_active %}
+
+                    {% if app.id in marked_ids_today %}
+
+                    {% if app.id in present_ids_today %}
+                    <span style="color:green;font-weight:600;">
+                Present
+            </span>
+                    {% else %}
+                    <span style="color:red;font-weight:600;">
+                Absent
+            </span>
+                    {% endif %}
+
+                    {% else %}
+                    <input type="checkbox" name="present_ids" value="{{ app.id }}">
+                    {% endif %}
+
+                    {% else %}
+                    Event not active
+                    {% endif %}
+
+                </td>
+
+            </tr>
+            {% endfor %}
+        </table>
+
+        {% if event_active and unmarked_exists %}
+        <div class="submit-row">
+            <button type="submit">Submit Attendance</button>
         </div>
+        {% endif %}
 
-        <!-- RIGHT -->
-        <div style="display:flex; justify-content:space-between; width:100%;">
+    </form>
 
-    {% if app.status == "APPLIED" %}
-    <!-- APPROVE / REJECT -->
-    <div class="actions">
-        <form method="post"
-              action="{% url 'org_approve_volunteer' app.id %}">
-            {% csrf_token %}
-            <button class="btn approve">Approve</button>
-        </form>
-
-        <form method="post"
-              action="{% url 'org_reject_volunteer' app.id %}">
-            {% csrf_token %}
-            <button class="btn reject">Reject</button>
-        </form>
-    </div>
+    {% else %}
+    <p>No selected volunteers</p>
     {% endif %}
+</div>
 
-    {% if app.status == "SELECTED" %}
-    <!-- ATTENDANCE + RATING -->
-    <div class="side" style="opacity:1;">
-        <h4>Attendance</h4>
-        <input type="checkbox">
+<!-- ================= APPLIED TABLE ================= -->
 
-        <h4>Rating</h4>
-        <div class="stars">
-            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-        </div>
-    </div>
-    {% endif %}
+<div id="applied_table" class="hidden">
+
+    <h2>Pending Applications</h2>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Year</th>
+            <th>Department</th>
+            <th>Approve</th>
+            <th>Reject</th>
+        </tr>
+
+        {% for app in applied_apps %}
+        <tr>
+            <td>{{ app.volunteer.full_name }}</td>
+            <td>{{ app.volunteer.year }}</td>
+            <td>{{ app.volunteer.department }}</td>
+
+            <td>
+                <form method="post" action="{% url 'org_approve_volunteer' app.id %}">
+                    {% csrf_token %}
+                    <button>Approve</button>
+                </form>
+            </td>
+
+            <td>
+                <form method="post" action="{% url 'org_reject_volunteer' app.id %}">
+                    {% csrf_token %}
+                    <button>Reject</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No pending applicants</td>
+        </tr>
+        {% endfor %}
+    </table>
 
 </div>
 
+<!-- ================= REJECTED TABLE ================= -->
 
-    </div>
+<div id="rejected_table" class="hidden">
+
+    <h2>Rejected Volunteers</h2>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Year</th>
+            <th>Department</th>
+        </tr>
+
+        {% for app in rejected_apps %}
+        <tr>
+            <td>{{ app.volunteer.full_name }}</td>
+            <td>{{ app.volunteer.year }}</td>
+            <td>{{ app.volunteer.department }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No rejected volunteers</td>
+        </tr>
+        {% endfor %}
+    </table>
+
 </div>
 
-{% endfor %}
-{% else %}
-<p>No applicants yet.</p>
-{% endif %}
-
-<!-- PROFILE MODAL -->
-<div class="modal" id="profileModal">
-    <div class="modal-box">
-        <span class="close" onclick="closeProfile()">✕</span>
-        <h2 id="pName"></h2>
-        <p id="pMeta"></p>
-        <p id="pSkills"></p>
-    </div>
-</div>
+<!-- ================= SIMPLE JS SWITCH ================= -->
 
 <script>
-function openProfile(name, year, dept, skills){
-    document.getElementById("pName").innerText = name;
-    document.getElementById("pMeta").innerText = year + " · " + dept;
-    document.getElementById("pSkills").innerText = skills;
-    document.getElementById("profileModal").style.display = "flex";
-}
-function closeProfile(){
-    document.getElementById("profileModal").style.display = "none";
-}
+    function showTable(type){
+        document.getElementById("selected_table").classList.add("hidden");
+        document.getElementById("applied_table").classList.add("hidden");
+        document.getElementById("rejected_table").classList.add("hidden");
+
+        document.getElementById(type + "_table").classList.remove("hidden");
+    }
 </script>
 
 {% endblock %}

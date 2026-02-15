@@ -91,8 +91,41 @@ button:hover {
             <label>📍 Location</label>
             <input type="text" name="location" required>
 
-            <label>📅 Date</label>
-            <input type="date" name="date" required>
+            <label>📅 Start Date</label>
+            <input type="date" name="start_date" required>
+
+            <label>📅 End Date</label>
+            <input type="date" name="end_date" required>
+<p id="durationText" style="margin-top:10px;color:#16a34a;font-weight:600;"></p>
+
+<script>
+const startInput = document.querySelector("input[name='start_date']");
+const endInput = document.querySelector("input[name='end_date']");
+const durationText = document.getElementById("durationText");
+
+function calculateDays(){
+    if(startInput.value && endInput.value){
+        const start = new Date(startInput.value);
+        const end = new Date(endInput.value);
+        const diff = (end - start) / (1000 * 60 * 60 * 24) + 1;
+
+        if(diff > 0){
+            durationText.innerText = "Event Duration: " + diff + " day(s)";
+        }
+    }
+}
+
+startInput.addEventListener("change", calculateDays);
+endInput.addEventListener("change", calculateDays);
+</script>
+<label>🏷 Event Type</label>
+<select name="event_type">
+    <option>Environmental</option>
+    <option>Technical</option>
+    <option>Healthcare</option>
+    <option>Social</option>
+</select>
+
 
             <label>👥 Required Volunteers</label>
             <input type="number" name="required_volunteers" required>

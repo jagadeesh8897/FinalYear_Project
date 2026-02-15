@@ -60,11 +60,13 @@
 <h2>📋 My Applications</h2>
 <p>Track the status of services you applied for</p>
 
+
 <table class="table">
     <thead>
         <tr>
             <th>Service</th>
-            <th>Date</th>
+            <th>Start_date</th>
+            <th>End_date</th>
             <th>Status</th>
             <th>Message</th>
         </tr>
@@ -72,9 +74,11 @@
 
     <tbody>
     {% for app in applications %}
+
         <tr>
             <td>{{ app.service.title }}</td>
-            <td>{{ app.service.date }}</td>
+            <td>{{ app.service.start_date }}</td>
+            <td>{{ app.service.end_date }}</td>
 
             <td>
                 {% if app.status == "APPLIED" %}

@@ -1,34 +1,25 @@
+import json
+from datetime import datetime
+
+from app1.models import Service
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404 , redirect
-from django.contrib import messages
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from app1.models import Service
-from datetime import date
-from django.utils.timezone import now
-from .models import Organization, Service
-from django.urls import reverse
-from django.http import HttpResponseRedirect
 
-from datetime import datetime, date, timedelta
-
-from .models import Service, Application
-
-import json
-import re
-
+from .models import Attendance
 from .models import (
-    VolunteerProfile,
     Organization,
     Service,
     Application
 )
 
 User = get_user_model()
+
 
 # ==================== AUTH ====================
 
@@ -89,8 +80,9 @@ def home(request):
 # ==================== DASHBOARDS ====================
 
 
-
 from django.utils.timezone import now
+
+
 @login_required
 def volunteer_dashboard_page(request):
     if request.user.role != "VOLUNTEER":
@@ -126,6 +118,42 @@ def volunteer_dashboard_page(request):
         status="COMPLETED"
     ).count()
 
+    from django.utils import timezone
+
+    selected_apps = Application.objects.filter(
+        volunteer=profile,
+        status="SELECTED"
+    ).select_related("service")
+
+    total_days = 0
+    total_present = 0
+
+    today = timezone.now().date()
+
+    for app in selected_apps:
+        service = app.service
+
+        if service.start_date and service.end_date:
+
+            # Count only days up to today (not future days)
+            effective_end = min(service.end_date, today)
+
+            if effective_end >= service.start_date:
+                event_days = (effective_end - service.start_date).days + 1
+                total_days += event_days
+
+        present_days = Attendance.objects.filter(
+            application=app,
+            is_present=True
+        ).count()
+
+        total_present += present_days
+
+    overall_attendance = (
+        round((total_present / total_days) * 100, 2)
+        if total_days > 0 else 0
+    )
+
     # 🎯 GOAL
     goal = 10
 
@@ -133,25 +161,27 @@ def volunteer_dashboard_page(request):
     upcoming_services = Service.objects.filter(
         application__volunteer=profile,
         application__status__in=["APPLIED", "SELECTED"],
-        date__gte=today
+        start_date__gte=today
     ).select_related(
         "organization",
         "organization__user"
-    ).distinct().order_by("date")
+    ).distinct().order_by("start_date")
 
     return render(
-    request,
-    "volunteer/dashboard.html",
-    {
-        "profile": profile,
-        "applied_count": applied,
-        "selected_count": selected,
-        "completed": completed,
-        "goal": goal,
-        "upcoming_services": upcoming_services,
-        "active_page": "dashboard",
-    }
-)
+        request,
+        "volunteer/dashboard.html",
+        {
+            "profile": profile,
+            "applied_count": applied,
+            "selected_count": selected,
+            "completed": completed,
+            "goal": goal,
+            "upcoming_services": upcoming_services,
+            "overall_attendance": overall_attendance,
+            "active_page": "dashboard",
+        }
+    )
+
 
 @login_required
 def organization_dashboard_page(request):
@@ -164,6 +194,7 @@ def organization_dashboard_page(request):
     return render(request, "organization/dashboard.html", {
         "services": services
     })
+
 
 @login_required
 def admin_dashboard_page(request):
@@ -194,7 +225,6 @@ def admin_pending_services(request):
 
     services = Service.objects.filter(status__iexact="pending")
 
-
     return render(
         request,
         "admin_panel/pending_services.html",
@@ -213,9 +243,6 @@ def admin_approve_service(request, service_id):
 
     messages.success(request, "Service approved successfully")
     return redirect("admin_pending_services")
-
-
-
 
 
 # ==================== ADMIN MODULE ====================
@@ -270,7 +297,6 @@ def admin_volunteers(request):
     })
 
 
-
 @login_required
 def admin_pending_organizations(request):
     if request.user.role != "ADMIN":
@@ -323,15 +349,17 @@ def create_service(request):
         title=data["title"],
         description=data["description"],
         location=data["location"],
-        date=datetime.strptime(data["date"], "%Y-%m-%d"),
+        start_date=datetime.strptime(data["date"], "%Y-%m-%d"),
+        end_date=datetime.strptime(data["date"], "%Y-%m-%d"),
         required_volunteers=data["required_volunteers"],
-        organization=org   # ✅ THIS IS ENOUGH
+        organization=org  # ✅ THIS IS ENOUGH
     )
 
     return JsonResponse({
         "message": "Service created",
         "service_id": service.id
     })
+
 
 @login_required
 def list_services(request):
@@ -362,9 +390,8 @@ def assign_volunteers(request, service_id):
 
     service = Service.objects.get(id=service_id)
     applications = Application.objects.filter(
-    service=service
-).select_related("volunteer").order_by("-id")
-
+        service=service
+    ).select_related("volunteer").order_by("-id")
 
     scored = [(calculate_score(app.volunteer, service), app) for app in applications]
     scored.sort(reverse=True, key=lambda x: x[0])
@@ -455,9 +482,10 @@ def validate_password(password):
 
 
 from django.db import transaction
-from django.shortcuts import render, redirect
 from django.contrib import messages
 import re
+
+
 def register_view(request):
     if request.method != "POST":
         return render(request, "register.html")
@@ -544,43 +572,33 @@ def register_view(request):
 
         if role == "VOLUNTEER":
             VolunteerProfile.objects.update_or_create(
-    user=user,
-    defaults={
-        "full_name": full_name,
-        "phone": phone,
-        "student_id": student_id,
-        "department": department,
-        "year": year,
-        "skills": skills,
-    }
-)
-
-
+                user=user,
+                defaults={
+                    "full_name": full_name,
+                    "phone": phone,
+                    "student_id": student_id,
+                    "department": department,
+                    "year": year,
+                    "skills": skills,
+                }
+            )
 
             messages.success(request, "Volunteer registered successfully")
 
         else:  # ORGANIZATION
-            if Organization.objects.filter(user=user).exists():
-                messages.warning(
-                    request,
-                    "Organization already registered"
-                )
-                user.delete()  # cleanup user
-                return redirect("login")
             user.is_active = False
             user.save()
 
             letter = request.FILES.get("verification_letter")
 
             Organization.objects.update_or_create(
-    user=user,
-    defaults={
-        "organization_name": full_name,  # ✅ org name only
-        "verification_letter": letter,
-        "approved": False
-    }
-)
-
+                user=user,
+                defaults={
+                    "organization_name": full_name,  # ✅ org name only
+                    "verification_letter": letter,
+                    "approved": False
+                }
+            )
 
             messages.success(
                 request,
@@ -589,9 +607,11 @@ def register_view(request):
 
     return redirect("login")
 
+
 def logout_view(request):
     logout(request)  # destroys session
     return redirect('login')
+
 
 @login_required
 def admin_active_works(request):
@@ -625,6 +645,7 @@ def admin_completed_works(request):
         "services": services
     })
 
+
 @login_required
 def organization_create_service(request):
     if request.user.role != "ORGANIZATION":
@@ -634,7 +655,8 @@ def organization_create_service(request):
         title = request.POST.get("title")
         description = request.POST.get("description")
         location = request.POST.get("location")
-        date_value = request.POST.get("date")
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
         required_volunteers = request.POST.get("required_volunteers")
 
         org = Organization.objects.get(user=request.user)
@@ -643,7 +665,8 @@ def organization_create_service(request):
             title=title,
             description=description,
             location=location,
-            date=date_value,
+            start_date=start_date,
+            end_date=end_date,
             required_volunteers=required_volunteers,
             organization=org,
             authorization_letter=request.FILES.get("authorization_letter"),
@@ -658,6 +681,7 @@ def organization_create_service(request):
         return redirect("organization_dashboard")
 
     return render(request, "organization/create_service.html")
+
 
 @login_required
 def admin_assign_volunteers_page(request, service_id):
@@ -675,6 +699,8 @@ def admin_assign_volunteers_page(request, service_id):
             "applications": applications
         }
     )
+
+
 # ---- AI SCORING ----
 def calculate_score(volunteer, service):
     score = 0
@@ -685,6 +711,7 @@ def calculate_score(volunteer, service):
 
 # ---- ADMIN ASSIGN VOLUNTEERS ----
 from django.views.decorators.http import require_POST
+
 
 @require_POST
 def assign_volunteers(request, service_id):
@@ -710,10 +737,11 @@ def assign_volunteers(request, service_id):
         app.status = "SELECTED"
         app.save()
 
-    service.status = "APPROVED"   # ACTIVE
+    service.status = "APPROVED"  # ACTIVE
     service.save()
 
     return redirect("admin_active_works")
+
 
 @login_required
 @require_POST
@@ -728,31 +756,36 @@ def admin_mark_service_completed(request, service_id):
 
     return redirect("admin_completed_works")
 
+
 @login_required
 def volunteer_available_services(request):
     if request.user.role != "VOLUNTEER":
         return redirect("login")
 
-    today = date.today()
+    today = timezone.now().date()
 
     services = Service.objects.filter(status="APPROVED")
 
     profile = VolunteerProfile.objects.get(user=request.user)
 
-    applied_services = Application.objects.filter(
-        volunteer=profile
-    ).values_list("service_id", flat=True)
+    applications = Application.objects.filter(volunteer=profile)
+
+    applied_dict = {
+        app.service.id: app.status
+        for app in applications
+    }
 
     return render(
-    request,
-    "volunteer/available_services.html",
-    {
-        "services": services,
-        "applied_services": applied_services,
-        "today": today,
-        "active_page": "services"
-    }
-)
+        request,
+        "volunteer/available_services.html",
+        {
+            "services": services,
+            "applied_dict": applied_dict,
+            "today": today,
+            "active_page": "services"
+        }
+    )
+
 
 @login_required
 def volunteer_apply_service(request, service_id):
@@ -764,13 +797,13 @@ def volunteer_apply_service(request, service_id):
     service = get_object_or_404(
         Service,
         id=service_id,
-        status="APPROVED"   
+        status="APPROVED"
     )
 
     # Prevent duplicate apply
     if Application.objects.filter(
-        volunteer=profile,
-        service=service
+            volunteer=profile,
+            service=service
     ).exists():
         messages.warning(
             request,
@@ -793,30 +826,60 @@ def volunteer_apply_service(request, service_id):
 
 @login_required
 def organization_view_applicants(request, service_id):
-    if request.user.role != "ORGANIZATION":
-        return redirect("login")
 
-    org = Organization.objects.get(user=request.user)
-    service = get_object_or_404(Service, id=service_id, organization=org)
+    service = get_object_or_404(Service, id=service_id)
 
-    applications = (
-        Application.objects
-        .filter(service=service)
-        .select_related("volunteer")   # ✅ THIS IS THE KEY
-    )
-    for app in applications:
-        app.skill_list = app.volunteer.skills.split(",") if app.volunteer.skills else []
+    # All applications for this service
+    applications = Application.objects.filter(service=service)
 
-    return render(
-        request,
-        "organization/view_applicants.html",
-        {
-            "service": service,
-            "applications": applications
-        }
+    selected_apps = applications.filter(status="SELECTED")
+    rejected_apps = applications.filter(status="REJECTED")
+    applied_apps  = applications.filter(status="APPLIED")
+
+    today = timezone.now().date()
+
+    # ✅ attendance records for today for this service
+    today_attendance = Attendance.objects.filter(
+        application__service=service,
+        date=today
     )
 
+    # ✅ who is present today
+    present_ids_today = set(
+        today_attendance.filter(is_present=True)
+        .values_list("application_id", flat=True)
+    )
 
+    # ✅ who is marked (present or absent)
+    marked_ids_today = set(
+        today_attendance.values_list("application_id", flat=True)
+    )
+
+    # ✅ check if any selected volunteer not yet marked today
+    unmarked_exists = selected_apps.exclude(
+        id__in=marked_ids_today
+    ).exists()
+
+    # ✅ event active check
+    event_active = (
+        service.start_date
+        and service.end_date
+        and service.start_date <= today <= service.end_date
+    )
+
+    context = {
+        "service": service,
+        "selected_apps": selected_apps,
+        "rejected_apps": rejected_apps,
+        "applied_apps": applied_apps,
+        "event_active": event_active,
+        "today": today,
+        "present_ids_today": present_ids_today,
+        "marked_ids_today": marked_ids_today,
+        "unmarked_exists": unmarked_exists,
+    }
+
+    return render(request, "organization/view_applicants.html", context)
 
 @login_required
 def org_approve_volunteer(request, app_id):
@@ -837,6 +900,7 @@ def org_approve_volunteer(request, app_id):
         service_id=app.service.id
     )
 
+
 @login_required
 def org_reject_volunteer(request, app_id):
     if request.user.role != "ORGANIZATION":
@@ -855,30 +919,6 @@ def org_reject_volunteer(request, app_id):
         service_id=app.service.id
     )
 
-@login_required
-def org_view_applicants(request, service_id):
-    if request.user.role != "ORGANIZATION":
-        return redirect("login")
-
-    org = Organization.objects.get(user=request.user)
-    service = get_object_or_404(Service, id=service_id, organization=org)
-
-    applications = Application.objects.filter(
-        service=service,
-        status="APPLIED"
-    )
-
-    return render(
-        request,
-        "organization/view_applicants.html",
-        {
-            "service": service,
-            "applications": applications
-        }
-    )
-
-from django.contrib import messages
-from django.views.decorators.http import require_POST
 
 @require_POST
 @login_required
@@ -920,6 +960,7 @@ def org_select_volunteers(request, service_id):
 
     return redirect("organization_dashboard")
 
+
 @login_required
 def org_view_volunteer_profile(request, volunteer_id):
     if request.user.role != "ORGANIZATION":
@@ -951,21 +992,19 @@ def volunteer_applications(request):
     ).select_related("service")
 
     return render(
-    request,
-    "volunteer/my_applications.html",
-    {
-        "applications": applications,
-        "active_page": "applications"
-    }
-)
+        request,
+        "volunteer/my_applications.html",
+        {
+            "applications": applications,
+            "active_page": "applications"
+        }
+    )
 
-
-from django.urls import reverse
-from django.http import HttpResponseRedirect
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import VolunteerProfile
+
 
 @login_required
 def volunteer_profile(request):
@@ -997,8 +1036,6 @@ def volunteer_profile(request):
     return render(request, "volunteer/profile.html", {"profile": profile})
 
 
-
-
 @login_required
 def admin_approved_organizations(request):
     if request.user.role != "ADMIN":
@@ -1015,3 +1052,76 @@ def admin_approved_organizations(request):
         }
     )
 
+
+@require_POST
+def mark_bulk_attendance(request, service_id):
+    service = get_object_or_404(Service, id=service_id)
+    if request.method == "POST":
+
+
+        today = timezone.now().date()
+
+        present_ids = request.POST.getlist("present_ids")
+
+        # all selected volunteers for this service
+        selected_apps = Application.objects.filter(
+            service=service,
+            status="SELECTED"
+        )
+
+        for app in selected_apps:
+            is_present = str(app.id) in present_ids
+
+            Attendance.objects.update_or_create(
+                application=app,
+                date=today,
+                defaults={
+                    "is_present": is_present
+                }
+            )
+
+    return redirect("org_view_applicants", service_id=service.id)
+
+@login_required
+def volunteer_attendance(request):
+
+    profile = VolunteerProfile.objects.get(user=request.user)
+
+    # All selected applications
+    applications = Application.objects.filter(
+        volunteer=profile,
+        status="SELECTED"
+    )
+
+    attendance_data = []
+
+    for app in applications:
+
+        service = app.service
+
+        total_days = (
+            (service.end_date - service.start_date).days + 1
+            if service.start_date and service.end_date
+            else 0
+        )
+
+        present_days = Attendance.objects.filter(
+            application=app,
+            is_present=True
+        ).count()
+
+        percentage = (
+            round((present_days / total_days) * 100, 2)
+            if total_days > 0 else 0
+        )
+
+        attendance_data.append({
+            "service": service,
+            "total_days": total_days,
+            "present_days": present_days,
+            "percentage": percentage,
+        })
+
+    return render(request, "volunteer/attendance.html", {
+        "attendance_data": attendance_data
+    })
