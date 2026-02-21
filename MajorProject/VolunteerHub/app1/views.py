@@ -118,7 +118,6 @@ def volunteer_dashboard_page(request):
         status="COMPLETED"
     ).count()
 
-    from django.utils import timezone
 
     selected_apps = Application.objects.filter(
         volunteer=profile,
@@ -153,6 +152,20 @@ def volunteer_dashboard_page(request):
         round((total_present / total_days) * 100, 2)
         if total_days > 0 else 0
     )
+    ratings = Application.objects.filter(
+        volunteer=profile,
+        rating__gt=0  # only real ratings
+    ).values_list("rating", flat=True)
+
+    ratings = list(ratings)
+
+    if ratings:
+        avg_rating = round(sum(ratings) / len(ratings), 2)
+        profile.rating = avg_rating
+        profile.save()
+    else:
+        profile.rating = None
+        avg_rating = None
 
     # 🎯 GOAL
     goal = 10
@@ -624,7 +637,7 @@ def admin_active_works(request):
         "services": services,
         "active_count": services.count(),
         "org_count": services.values("organization").distinct().count(),
-        "total_required": sum(s.required_volunteers for s in services),
+        "total_required": sum(s.max_volunteers for s in services),
     }
 
     return render(
@@ -667,7 +680,7 @@ def organization_create_service(request):
             location=location,
             start_date=start_date,
             end_date=end_date,
-            required_volunteers=required_volunteers,
+            max_volunteers=required_volunteers,
             organization=org,
             authorization_letter=request.FILES.get("authorization_letter"),
             status="PENDING"
@@ -837,6 +850,7 @@ def organization_view_applicants(request, service_id):
     applied_apps  = applications.filter(status="APPLIED")
 
     today = timezone.now().date()
+    event_last_day = service.end_date
 
     # ✅ attendance records for today for this service
     today_attendance = Attendance.objects.filter(
@@ -866,6 +880,24 @@ def organization_view_applicants(request, service_id):
         and service.end_date
         and service.start_date <= today <= service.end_date
     )
+    # Check if today is last day
+    is_last_day = today == service.end_date
+
+    # Check if attendance for today is marked for all selected volunteers
+    selected_count = Application.objects.filter(
+        service=service,
+        status="SELECTED"
+    ).count()
+
+    today_attendance_count = Attendance.objects.filter(
+        application__service=service,
+        date=today
+    ).count()
+
+    attendance_completed_today = selected_count == today_attendance_count
+
+    # Final condition
+    rating_open = is_last_day and attendance_completed_today
 
     context = {
         "service": service,
@@ -877,6 +909,7 @@ def organization_view_applicants(request, service_id):
         "present_ids_today": present_ids_today,
         "marked_ids_today": marked_ids_today,
         "unmarked_exists": unmarked_exists,
+        "rating_open": rating_open,
     }
 
     return render(request, "organization/view_applicants.html", context)
@@ -1120,8 +1153,303 @@ def volunteer_attendance(request):
             "total_days": total_days,
             "present_days": present_days,
             "percentage": percentage,
+            "rating": app.rating
         })
 
     return render(request, "volunteer/attendance.html", {
         "attendance_data": attendance_data
     })
+
+
+@login_required
+def rate_volunteer(request, app_id):
+
+    # 🔐 Only organization can rate
+    if request.user.role != "ORGANIZATION":
+        return JsonResponse({"success": False, "error": "Unauthorized"})
+
+    app = get_object_or_404(Application, id=app_id)
+
+    # 🔐 Only service owner can rate
+    if app.service.organization.user != request.user:
+        return JsonResponse({"success": False, "error": "Not allowed"})
+
+    today = timezone.now().date()
+
+    # ✅ Rating only on last day
+    if today != app.service.end_date:
+        return JsonResponse({"success": False, "error": "Not last day"})
+
+    # ✅ Attendance must be fully completed for today
+    selected_count = Application.objects.filter(
+        service=app.service,
+        status="SELECTED"
+    ).count()
+
+    today_attendance_count = Attendance.objects.filter(
+        application__service=app.service,
+        date=today
+    ).count()
+
+    if selected_count != today_attendance_count:
+        return JsonResponse({"success": False, "error": "Attendance not completed"})
+
+    # 🚫 Prevent re-rating
+    if app.rating:
+        return JsonResponse({"success": False, "error": "Already rated"})
+
+    # ======================
+    # ⭐ SAVE RATING
+    # ======================
+    if request.method == "POST":
+        data = json.loads(request.body)
+        rating = int(data.get("rating"))
+
+        if rating < 1 or rating > 5:
+            return JsonResponse({"success": False, "error": "Invalid rating"})
+
+        app.rating = rating
+        app.save()
+
+        # ======================
+        # 🔄 UPDATE VOLUNTEER AVG
+        # ======================
+        ratings = Application.objects.filter(
+            volunteer=app.volunteer,
+            rating__isnull=False
+        ).values_list("rating", flat=True)
+
+        avg = sum(ratings) / len(ratings)
+
+        app.volunteer.rating = round(avg, 2)
+        app.volunteer.save()
+
+        return JsonResponse({
+            "success": True,
+            "new_average": app.volunteer.rating
+        })
+
+    return JsonResponse({"success": False})
+
+from django.db.models import Avg, Count
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect
+
+@login_required
+@transaction.atomic
+@require_POST
+def auto_select_volunteers(request, service_id):
+
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    service = get_object_or_404(Service, id=service_id)
+
+    total_required = service.max_volunteers
+    print("SERVICE ID:", service.id)
+    print("MAX VOLUNTEERS:", service.max_volunteers)
+
+    # ---------------------------------------
+    # STEP 1: Reset ALL applications to APPLIED
+    # (Important for clean recalculation)
+    # ---------------------------------------
+    Application.objects.filter(
+        service=service
+    ).update(status="APPLIED")
+
+    # ---------------------------------------
+    # STEP 2: Fetch fresh applied list
+    # ---------------------------------------
+    applications = Application.objects.filter(
+        service=service,
+        status="APPLIED"
+    ).select_related("volunteer")
+
+    total_applied = applications.count()
+
+    if total_applied == 0:
+        return redirect("org_view_applicants", service_id=service.id)
+
+    # If applied <= required → select all
+    if total_applied <= total_required:
+        applications.update(status="SELECTED")
+        return redirect("org_view_applicants", service_id=service.id)
+
+    # ---------------------------------------
+    # STEP 3: Separate Freshers & Experienced
+    # ---------------------------------------
+    experienced = []
+    freshers = []
+
+    for app in applications:
+
+        completed_count = Application.objects.filter(
+            volunteer=app.volunteer,
+            status="COMPLETED"
+        ).count()
+
+        if completed_count > 0:
+            experienced.append(app)
+        else:
+            freshers.append(app)
+
+    exp_count = len(experienced)
+    fresher_count = len(freshers)
+
+    # ---------------------------------------
+    # STEP 4: Dynamic Proportional Allocation
+    # ---------------------------------------
+
+    # Example:
+    # 15 applied → 9 experienced, 6 freshers
+    # Required = 10
+    # Exp share = (9/15)*10 = 6
+    # Fresher share = 4
+
+    selected_exp = 0
+    selected_fresher = 0
+
+    if total_applied > 0:
+        selected_exp = round((exp_count / total_applied) * total_required)
+        selected_fresher = total_required - selected_exp
+
+    # Do not exceed available
+    selected_exp = min(selected_exp, exp_count)
+    selected_fresher = min(selected_fresher, fresher_count)
+
+    # ---------------------------------------
+    # STEP 5: Scoring System
+    # ---------------------------------------
+    def calculate_score(app):
+
+        volunteer = app.volunteer
+
+        # Attendance %
+        total_att = Attendance.objects.filter(
+            application__volunteer=volunteer
+        ).count()
+
+        present_att = Attendance.objects.filter(
+            application__volunteer=volunteer,
+            is_present=True
+        ).count()
+
+        attendance_percentage = (
+            (present_att / total_att) * 100
+            if total_att > 0 else 0
+        )
+
+        rating = volunteer.rating or 0
+        rating_scaled = rating * 20  # Convert 5 scale → 100 scale
+
+        completed = Application.objects.filter(
+            volunteer=volunteer,
+            status="COMPLETED"
+        ).count()
+
+        # Experienced Scoring
+        if completed > 0:
+            return (attendance_percentage * 0.6) + (rating_scaled * 0.4)
+
+        # Fresher Scoring
+        year_bonus = 20 if volunteer.year == "4" else 15
+        skill_bonus = 20 if volunteer.skills else 10
+        return year_bonus + skill_bonus
+
+    # Sort both groups
+    experienced.sort(key=lambda x: calculate_score(x), reverse=True)
+    freshers.sort(key=lambda x: calculate_score(x), reverse=True)
+
+    # ---------------------------------------
+    # STEP 6: Select Based on Allocation
+    # ---------------------------------------
+    selected_list = []
+
+    selected_list.extend(experienced[:selected_exp])
+    selected_list.extend(freshers[:selected_fresher])
+
+    # ---------------------------------------
+    # STEP 7: Fill Remaining Slots (Important)
+    # ---------------------------------------
+    if len(selected_list) < total_required:
+
+        remaining_slots = total_required - len(selected_list)
+
+        remaining_pool = (
+            experienced[selected_exp:] +
+            freshers[selected_fresher:]
+        )
+
+        remaining_pool.sort(
+            key=lambda x: calculate_score(x),
+            reverse=True
+        )
+
+        selected_list.extend(remaining_pool[:remaining_slots])
+
+    # Final safety cut
+    selected_list = selected_list[:total_required]
+
+    selected_ids = [app.id for app in selected_list]
+
+    # ---------------------------------------
+    # STEP 8: Final Status Update
+    # ---------------------------------------
+
+    # Reject all first
+    Application.objects.filter(
+        service=service
+    ).update(status="REJECTED")
+
+    # Select chosen ones
+    Application.objects.filter(
+        id__in=selected_ids
+    ).update(status="SELECTED")
+
+    print("TOTAL APPLIED:", total_applied)
+    print("FRESHERS:", fresher_count)
+    print("EXPERIENCED:", exp_count)
+    print("FINAL SELECTED:", len(selected_ids))
+
+    return redirect("org_view_applicants", service_id=service.id)
+
+@login_required
+def organization_profile(request):
+
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    organization = get_object_or_404(
+        Organization,
+        user=request.user
+    )
+
+    return render(
+        request,
+        "organization/profile.html",
+        {"organization": organization}
+    )
+
+@login_required
+def edit_organization_profile(request):
+
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    organization = get_object_or_404(
+        Organization,
+        user=request.user
+    )
+
+    if request.method == "POST":
+        organization.organization_name = request.POST.get("organization_name")
+        organization.save()
+
+        messages.success(request, "Profile updated successfully!")
+        return redirect("organization_profile")
+
+    return render(
+        request,
+        "organization/edit_profile.html",
+        {"organization": organization}
+    )

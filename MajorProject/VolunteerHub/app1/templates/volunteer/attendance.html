@@ -80,6 +80,7 @@
             <th>Total Days</th>
             <th>Present</th>
             <th>Attendance</th>
+            <th>Rating</th>
             <th>Status</th>
         </tr>
 
@@ -97,6 +98,21 @@
                 </div>
                 <small>{{ item.percentage }}%</small>
             </td>
+<td>
+    {% if item.rating %}
+        {% for i in "12345" %}
+            {% if forloop.counter <= item.rating %}
+                <span style="color:#facc15;">★</span>
+            {% else %}
+                <span style="color:#ccc;">★</span>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        -
+    {% endif %}
+</td>
+
+
 
             <td>
                 {% if item.percentage >= 75 %}

@@ -87,6 +87,9 @@
                     <span class="badge selected">Selected</span>
                 {% elif app.status == "REJECTED" %}
                     <span class="badge rejected">Rejected</span>
+                {% elif app.status == "COMPLETED" %}
+                    <span class="badge selected">COMPLETED</span>
+
                 {% endif %}
             </td>
 
@@ -97,6 +100,8 @@
                     🎉 Congratulations! You are selected for this service
                 {% elif app.status == "REJECTED" %}
                     😔 Sorry, you were not selected. Try the next opportunity!
+                {% elif app.status == "COMPLETED" %}
+                    🎉 Congratulations! Your service was successfully completed.
                 {% endif %}
             </td>
         </tr>

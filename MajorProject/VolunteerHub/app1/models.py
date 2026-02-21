@@ -67,7 +67,7 @@ class Service(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
 
-    required_volunteers = models.IntegerField()
+    max_volunteers = models.IntegerField()
 
     organization = models.ForeignKey(
         Organization,
@@ -97,9 +97,11 @@ class Service(models.Model):
 
 class Application(models.Model):
     STATUS_CHOICES = [
-        ('APPLIED', 'Applied'),
-        ('SELECTED', 'Selected'),
-        ('COMPLETED', 'Completed'),
+        ("APPLIED", "Applied"),
+        ("SELECTED", "Selected"),
+        ("REJECTED", "Rejected"),
+        ("COMPLETED", "Completed"),
+        ("CLOSED", "Closed"),
     ]
 
     volunteer = models.ForeignKey(VolunteerProfile, on_delete=models.CASCADE)

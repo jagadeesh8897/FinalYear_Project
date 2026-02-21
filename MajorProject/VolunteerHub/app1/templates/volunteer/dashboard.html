@@ -86,12 +86,20 @@
         <p>Attendance Rate</p>
     </div>
 
-    <div class="stat-card yellow">
-        <div class="icon">⭐</div>
-        <h2>{{ profile.rating|default:"N/A" }}</h2>
+<div class="stat-card yellow">
+    <div class="icon">⭐</div>
+
+    {% if profile.rating %}
+        <h2>⭐ {{ profile.rating }}/5</h2>
         <p>Average Rating</p>
+    {% else %}
+        <h2>N/A</h2>
+        <p>No Rating Yet</p>
         <small>Complete services to get rated</small>
-    </div>
+    {% endif %}
+
+</div>
+
 
     <div class="stat-card cyan">
         <div class="icon">⏱</div>

@@ -34,6 +34,10 @@ urlpatterns = [
     path('organization/volunteer/<int:volunteer_id>/profile/', views.org_view_volunteer_profile, name='org_view_volunteer_profile'),
     path('organization/application/<int:app_id>/approve/', views.org_approve_volunteer, name='org_approve_volunteer'),
     path('organization/application/<int:app_id>/reject/', views.org_reject_volunteer, name='org_reject_volunteer'),
+    path('organization/application/<int:app_id>/rate/',views.rate_volunteer,name='rate_volunteer'),
+    path("organization/profile/", views.organization_profile, name="organization_profile"),
+    path("organization/profile/edit/", views.edit_organization_profile, name="edit_organization_profile"),
+
 
     # ADMIN PANEL (CUSTOM)
     path('admin_panel/dashboard/', views.admin_dashboard_page, name='admin_dashboard'),
@@ -47,6 +51,11 @@ urlpatterns = [
     path('admin_panel/complete-service/<int:service_id>/', views.admin_mark_service_completed, name='admin_complete_service'),
     path('admin_panel/assign/<int:service_id>/', views.admin_assign_volunteers_page, name='admin_assign_page'),
     path('admin_panel/assign-confirm/<int:service_id>/', views.assign_volunteers, name='assign_volunteers'),
+    path("auto-select/<int:service_id>/",views.auto_select_volunteers,name="auto_select_volunteers"),
+
+
+
+
 # ADMIN ORG APPROVAL ACTIONS
 path(
     'admin_panel/approve-org/<int:org_id>/',
