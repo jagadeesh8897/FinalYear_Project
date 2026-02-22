@@ -157,6 +157,44 @@ body{
     font-size:18px;
     color:#6b7280;
 }
+/* Filter Buttons Container */
+.filter-buttons {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 30px;
+}
+
+/* Default Button */
+.filter-buttons a {
+    padding: 9px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    background: #f4f1ea;   /* light beige */
+    color: #3e3a36;        /* dark brown */
+    border: 1px solid #e5ded6;
+    transition: all 0.3s ease;
+}
+
+/* Hover Effect */
+.filter-buttons a:hover {
+    background: #d6c7b8;   /* soft brown */
+    color: #1f1f1f;
+}
+
+/* Active Selected Filter */
+.active-filter {
+    background: linear-gradient(90deg, #2c2c2c, #4b3f36);
+    color: #ffffff !important;
+    border: none;
+}
+
+.active-filter {
+    background: linear-gradient(90deg, #c8b6a6, #a78f7c);  /* brown gradient */
+    color: #1f1f1f !important;   /* black text */
+    border: none;
+}
 </style>
 
 <!-- ================= TOP NAVIGATION ================= -->
@@ -213,13 +251,38 @@ body{
     </div>
 
     <!-- ================= SERVICES GRID ================= -->
+
+    <div class="filter-buttons">
+
+    <a href="{% url 'organization_dashboard' %}"
+       class="{% if not status_filter %}active-filter{% endif %}">
+        All Services
+    </a>
+
+    <a href="?status=active"
+       class="{% if status_filter == 'active' %}active-filter{% endif %}">
+        Active Services
+    </a>
+
+    <a href="?status=closed"
+       class="{% if status_filter == 'closed' %}active-filter{% endif %}">
+        Closed Services
+    </a>
+
+</div>
+
     <div class="services-grid">
         {% for s in services %}
         <div class="service-card">
             <div class="card-header">
-                <h3>{{ s.title }}</h3>
-                <span class="status {{ s.status|lower }}">
-                    {{ s.status }}
+                <h3>
+    <a href="{% url 'organization_service_detail' s.id %}"
+       style="text-decoration:none; color:inherit;">
+        {{ s.title }}
+    </a>
+</h3>
+                <span class="status {{  s.dynamic_status |lower }}">
+                    {{ s.dynamic_status }}
                 </span>
             </div>
 

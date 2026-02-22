@@ -45,6 +45,24 @@
     }
 </style>
 
+<div style="margin-bottom:20px; display:flex; gap:10px;">
+
+    <a href="{% url 'volunteer_available_services' %}" 
+       style="padding:8px 16px; background:#e5e7eb; border-radius:8px; text-decoration:none;">
+       All Services
+    </a>
+
+    <a href="?status=active" 
+       style="padding:8px 16px; background:#22c55e; color:white; border-radius:8px; text-decoration:none;">
+       Active Services
+    </a>
+
+    <a href="?status=closed" 
+       style="padding:8px 16px; background:#ef4444; color:white; border-radius:8px; text-decoration:none;">
+       Closed Services
+    </a>
+
+</div>
 <h1>Available Services</h1>
 
 <div class="service-grid">

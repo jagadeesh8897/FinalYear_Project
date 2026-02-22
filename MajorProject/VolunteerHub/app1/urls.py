@@ -4,6 +4,7 @@ from .views import logout_view
 
 urlpatterns = [
 
+
     # HOME
     path('', views.home, name='home'),
 
@@ -15,8 +16,17 @@ urlpatterns = [
 
 
     # VOLUNTEER
+    path(
+    'volunteer/',
+    views.volunteer_dashboard_page,
+    name='volunteer_home'
+),
     path('volunteer/dashboard/', views.volunteer_dashboard_page, name='volunteer_dashboard'),
-    path('volunteer/services/', views.volunteer_available_services, name='volunteer_services'),
+path(
+    'volunteer/services/',
+    views.volunteer_available_services,
+    name='volunteer_available_services'
+),
     path('volunteer/apply/<int:service_id>/', views.volunteer_apply_service, name='volunteer_apply_service'),
     path('volunteer/applications/', views.volunteer_applications, name='volunteer_applications'),
     path('volunteer/profile/', views.volunteer_profile, name='volunteer_profile'),
@@ -106,5 +116,10 @@ path(
     views.approve_absence,
     name="approve_absence"
 ),
-]
 
+path(
+    'organization/service/<int:service_id>/details/',
+    views.organization_service_detail,
+    name='organization_service_detail'
+),
+]

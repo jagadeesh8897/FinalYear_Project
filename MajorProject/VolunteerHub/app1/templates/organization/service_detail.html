@@ -1,0 +1,166 @@
+{% extends "organization/base.html" %}
+{% block content %}
+
+<style>
+
+/* Page Wrapper */
+.detail-wrapper {
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+/* Main Card */
+.detail-card {
+    background: #ffffff;
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+}
+
+/* Header */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.detail-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 8px 18px;
+    border-radius: 25px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-badge.approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Grid Layout */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+/* Small Info Card */
+.info-card {
+    background: #f9fafb;
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid #f1f5f9;
+    transition: 0.3s ease;
+}
+
+.info-card:hover {
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.08);
+}
+
+.info-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.info-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: #111827;
+}
+
+/* Description Box */
+.description-box {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 14px;
+    background: #f3f4f6;
+}
+
+.description-box h4 {
+    margin-top: 0;
+}
+
+</style>
+
+<div class="detail-wrapper">
+    <div class="detail-card">
+
+        <!-- Header -->
+        <div class="detail-header">
+            <h2>{{ service.title }}</h2>
+
+            <span class="status-badge {{ service.status|lower }}">
+                {{ service.status }}
+            </span>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="detail-grid">
+
+            <div class="info-card">
+                <div class="info-label">Location</div>
+                <div class="info-value">{{ service.location }}</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Start Date</div>
+                <div class="info-value">{{ service.start_date }}</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">End Date</div>
+                <div class="info-value">{{ service.end_date }}</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Required Volunteers</div>
+                <div class="info-value">{{ service.max_volunteers }}</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Required Gender</div>
+                <div class="info-value">{{ service.required_gender }}</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Required Year</div>
+                <div class="info-value">{{ service.required_year }}</div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-label">Skills Required</div>
+                <div class="info-value">{{ service.skills_required }}</div>
+            </div>
+
+        </div>
+
+        <!-- Description -->
+        <div class="description-box">
+            <h4>Description</h4>
+            <p>{{ service.description }}</p>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

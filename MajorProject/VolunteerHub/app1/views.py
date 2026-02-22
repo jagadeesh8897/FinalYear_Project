@@ -204,11 +204,28 @@ def organization_dashboard_page(request):
         return redirect("login")
 
     org = request.user.organization
+    status_filter = request.GET.get("status")
+    today = timezone.now().date()
 
     services = Service.objects.filter(organization=org)
+    for service in services:
+        if service.start_date <= today <= service.end_date:
+            service.dynamic_status = "ACTIVE"
+        elif today > service.end_date:
+            service.dynamic_status = "CLOSED"
+        else:
+            service.dynamic_status = "UPCOMING"
 
     approved_count = services.filter(status="APPROVED").count()
     pending_count = services.filter(status="PENDING").count()
+    status_filter = request.GET.get("status")
+    if status_filter:
+        services = [
+            s for s in services
+            if s.dynamic_status.lower() == status_filter.lower()
+        ]
+
+    
 
     # 🔥 Total Applicants Across All Works
     total_applicants = Application.objects.filter(
@@ -234,6 +251,8 @@ def organization_dashboard_page(request):
         "total_applicants": total_applicants,
         "total_selected": total_selected,
         "total_completed": total_completed,
+        "status_filter": status_filter,
+        "today": today,
     }
 
     return render(
@@ -810,15 +829,24 @@ def admin_mark_service_completed(request, service_id):
 
     return redirect("admin_completed_works")
 
-
 @login_required
 def volunteer_available_services(request):
+
     if request.user.role != "VOLUNTEER":
         return redirect("login")
 
     today = timezone.now().date()
+    status_filter = request.GET.get("status")
 
+    # Base queryset (only approved services)
     services = Service.objects.filter(status="APPROVED")
+
+    # Apply filter safely
+    if status_filter == "active":
+        services = services.filter(end_date__gte=today)
+
+    elif status_filter == "closed":
+        services = services.filter(end_date__lt=today)
 
     profile = VolunteerProfile.objects.get(user=request.user)
 
@@ -836,10 +864,10 @@ def volunteer_available_services(request):
             "services": services,
             "applied_dict": applied_dict,
             "today": today,
-            "active_page": "services"
+            "active_page": "services",
+            "status_filter": status_filter,
         }
     )
-
 
 @login_required
 def volunteer_apply_service(request, service_id):
@@ -1733,4 +1761,23 @@ def approve_absence(request, app_id):
 
     return redirect(
         reverse("org_view_applicants", args=[service.id]) + "?tab=selected"
+    )
+
+@login_required
+def organization_service_detail(request, service_id):
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    service = get_object_or_404(Service, id=service_id)
+
+    # Security: only owner can view
+    if service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    return render(
+        request,
+        "organization/service_detail.html",
+        {
+            "service": service
+        }
     )
