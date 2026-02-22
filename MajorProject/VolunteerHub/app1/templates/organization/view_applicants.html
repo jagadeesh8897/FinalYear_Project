@@ -2,6 +2,9 @@
 {% block content %}
 
 <style>
+    .hidden {
+    display: none;
+}
     body{
         background:#f4f6fb;
         font-family:'Segoe UI',sans-serif;
@@ -134,6 +137,20 @@
         transition: 0.2s;
     }
 
+    .select-btn{
+    padding:6px 14px;
+    background:#22c55e;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.select-btn:hover{
+    background:#16a34a;
+}
+
     .star-rating span.active {
         color: #facc15;
         transform: scale(1.2);
@@ -153,6 +170,9 @@
     <button class="filter-btn active" onclick="showTable('selected', this)">Selected</button>
     <button class="filter-btn" onclick="showTable('applied', this)">Applied</button>
     <button class="filter-btn" onclick="showTable('rejected', this)">Rejected</button>
+    <button class="filter-btn" onclick="showTable('waitlist', this)">
+    Waitlist
+</button>
 </div>
 
 <!-- ================= SELECTED TABLE ================= -->
@@ -161,74 +181,68 @@
 
     <h2>Selected Volunteers</h2>
 
-    {% if selected_apps %}
+{% if selected_apps %}
 
-    <form method="post" action="{% url 'mark_bulk_attendance' service.id %}">
-        {% csrf_token %}
+<table>
+<tr>
+    <th>Name</th>
+    <th>Year</th>
+    <th>Department</th>
+    <th>Absence</th>
+    <th>Attendance</th>
+    <th>Rating</th>
+</tr>
 
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Year</th>
-                <th>Department</th>
-                <th>Attendance</th>
-                <th>Rating</th>
-            </tr>
+{% for app in selected_apps %}
+<tr>
+    <td>{{ app.volunteer.full_name }}</td>
+    <td>{{ app.volunteer.year }}</td>
+    <td>{{ app.volunteer.department }}</td>
 
-            {% for app in selected_apps %}
-            <tr>
-                <td>{{ app.volunteer.full_name }}</td>
-                <td>{{ app.volunteer.year }}</td>
-                <td>{{ app.volunteer.department }}</td>
+    <!-- ABSENCE BUTTON (OWN FORM) -->
+    <td>
+        {% if app.absence_requested and not app.absence_approved %}
+            <form method="post" action="{% url 'approve_absence' app.id %}">
+                {% csrf_token %}
+                <button style="background:red;">Approve Absence</button>
+            </form>
 
-                <td>
-                    {% if event_active %}
-                        {% if app.id in marked_ids_today %}
-                            {% if app.id in present_ids_today %}
-                                <span style="color:green;font-weight:600;">Present</span>
-                            {% else %}
-                                <span style="color:red;font-weight:600;">Absent</span>
-                            {% endif %}
-                        {% else %}
-                            <input type="checkbox" name="present_ids" value="{{ app.id }}">
-                        {% endif %}
-                    {% else %}
-                        Event not active
-                    {% endif %}
-                </td>
-
-                <td>
-                    {% if rating_open %}
-                        {% if app.rating %}
-                            ⭐ {{ app.rating }}
-                        {% else %}
-                            <div class="star-rating" data-app-id="{{ app.id }}">
-                                <span data-value="1">★</span>
-                                <span data-value="2">★</span>
-                                <span data-value="3">★</span>
-                                <span data-value="4">★</span>
-                                <span data-value="5">★</span>
-                            </div>
-                        {% endif %}
-                    {% else %}
-                        Rating opens on last day
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-
-        {% if event_active and unmarked_exists %}
-        <div class="submit-row">
-            <button type="submit">Submit Attendance</button>
-        </div>
+        {% elif app.absence_approved %}
+            <span style="color:red;">Absence Approved</span>
+        {% else %}
+            -
         {% endif %}
+    </td>
 
-    </form>
+    <!-- ATTENDANCE CHECKBOX -->
+    <td>
+        {% if event_active %}
+            <form method="post" action="{% url 'mark_bulk_attendance' service.id %}">
+                {% csrf_token %}
+                <input type="checkbox" name="present_ids" value="{{ app.id }}">
+                <button type="submit">Save</button>
+            </form>
+        {% else %}
+            Event not active
+        {% endif %}
+    </td>
 
-    {% else %}
-    <p>No selected volunteers</p>
-    {% endif %}
+    <!-- RATING -->
+    <td>
+        {% if rating_open %}
+            ⭐ {{ app.rating|default:"-" }}
+        {% else %}
+            Rating opens on last day
+        {% endif %}
+    </td>
+
+</tr>
+{% endfor %}
+</table>
+
+{% else %}
+<p>No selected volunteers</p>
+{% endif %}
 </div>
 
 <!-- ================= APPLIED TABLE ================= -->
@@ -248,6 +262,7 @@
             <th>Year</th>
             <th>Department</th>
             <th>Approve</th>
+            <th>Waitlist</th>
             <th>Reject</th>
         </tr>
 
@@ -262,11 +277,22 @@
             <td>{{ app.volunteer.department }}</td>
 
             <td>
-                <form method="post" action="{% url 'org_approve_volunteer' app.id %}">
-                    {% csrf_token %}
-                    <button>Approve</button>
-                </form>
-            </td>
+{% if remaining_seats > 0 %}
+    <form method="post" action="{% url 'approve_volunteer' app.id %}">
+        {% csrf_token %}
+        <button class="approve-btn">Approve</button>
+    </form>
+{% else %}
+    <button disabled style="opacity:0.5;">Full</button>
+{% endif %}
+</td>
+
+            <td>
+    <form method="post" action="{% url 'waitlist_volunteer' app.id %}">
+        {% csrf_token %}
+        <button class="waitlist-btn">Waitlist</button>
+    </form>
+</td>
 
             <td>
                 <form method="post" action="{% url 'org_reject_volunteer' app.id %}">
@@ -274,6 +300,7 @@
                     <button>Reject</button>
                 </form>
             </td>
+            
         </tr>
         {% empty %}
         <tr>
@@ -312,6 +339,35 @@
 
 </div>
 
+
+<div id="waitlist_table" class="hidden">
+
+<h2>Waitlisted Volunteers</h2>
+
+<table>
+<tr>
+    <th>Name</th>
+    <th>Year</th>
+    <th>Department</th>
+    <th>Promote</th>
+</tr>
+
+{% for app in waitlist_apps %}
+<tr>
+    <td>{{ app.volunteer.full_name }}</td>
+    <td>{{ app.volunteer.year }}</td>
+    <td>{{ app.volunteer.department }}</td>
+    <td>
+        <form method="post" action="{% url 'promote_waitlist' app.id %}">
+            {% csrf_token %}
+            <button>Promote</button>
+        </form>
+    </td>
+</tr>
+{% endfor %}
+</table>
+
+</div>
 <!-- ================= JS ================= -->
 
 <script>
@@ -321,6 +377,7 @@ function showTable(type, btn){
     document.getElementById("selected_table").classList.add("hidden");
     document.getElementById("applied_table").classList.add("hidden");
     document.getElementById("rejected_table").classList.add("hidden");
+    document.getElementById("waitlist_table").classList.add("hidden");
 
     document.getElementById(type + "_table").classList.remove("hidden");
 
@@ -390,6 +447,22 @@ function clear(stars){
         star.classList.remove("active");
     });
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+
+    if (tab) {
+        const button = document.querySelector(
+            `.filter-btn[onclick*="${tab}"]`
+        );
+        if (button) {
+            showTable(tab, button);
+        }
+    }
+});
+
 
 </script>
 

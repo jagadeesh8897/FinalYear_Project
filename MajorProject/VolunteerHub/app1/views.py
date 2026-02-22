@@ -171,15 +171,17 @@ def volunteer_dashboard_page(request):
     goal = 10
 
     # 📅 UPCOMING SERVICES
-    upcoming_services = Service.objects.filter(
-        application__volunteer=profile,
-        application__status__in=["APPLIED", "SELECTED"],
-        start_date__gte=today
-    ).select_related(
-        "organization",
-        "organization__user"
-    ).distinct().order_by("start_date")
+    # 📅 UPCOMING SERVICES (FIXED)
 
+    upcoming_services = Application.objects.filter(
+        volunteer=profile,
+        status="SELECTED",
+        service__start_date__gte=today
+    ).select_related(
+        "service",
+        "service__organization",
+        "service__organization__user"
+    ).order_by("service__start_date")
     return render(
         request,
         "volunteer/dashboard.html",
@@ -540,11 +542,13 @@ def register_view(request):
     email = request.POST.get("email")
     phone = request.POST.get("phone")
     year = request.POST.get("year") if role == "VOLUNTEER" else ""
+    gender = request.POST.get("gender")
     student_id = request.POST.get("student_id")
     department = request.POST.get("department")
     skills = request.POST.get("skills", "")
     password = request.POST.get("password")
     rpassword = request.POST.get("rpassword")
+
 
     # ---------- VALIDATIONS ----------
     if password != rpassword:
@@ -625,6 +629,7 @@ def register_view(request):
                     "department": department,
                     "year": year,
                     "skills": skills,
+                    "gender": gender, 
                 }
             )
 
@@ -703,6 +708,8 @@ def organization_create_service(request):
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
         required_volunteers = request.POST.get("required_volunteers")
+        required_gender = request.POST.get("required_gender")
+        required_year = request.POST.get("required_year")
 
         org = Organization.objects.get(user=request.user)
 
@@ -715,7 +722,9 @@ def organization_create_service(request):
             max_volunteers=required_volunteers,
             organization=org,
             authorization_letter=request.FILES.get("authorization_letter"),
-            status="PENDING"
+            status="PENDING",
+            required_gender=required_gender,
+            required_year=required_year,
         )
 
         messages.success(
@@ -879,7 +888,26 @@ def organization_view_applicants(request, service_id):
 
     selected_apps = applications.filter(status="SELECTED")
     rejected_apps = applications.filter(status="REJECTED")
-    applied_apps  = applications.filter(status="APPLIED")
+    waitlist_apps = applications.filter(status="WAITLIST")
+    applied_apps = applications.filter(status="APPLIED")
+    selected_count = Application.objects.filter(
+        service=service,
+        status="SELECTED"
+    ).count()
+
+    remaining_seats = service.max_volunteers - selected_count
+
+
+    if service.required_gender != "ANY":
+        applied_apps = applied_apps.filter(
+            volunteer__gender=service.required_gender
+        )
+
+
+    if service.required_year:
+        applied_apps = applied_apps.filter(
+            volunteer__year=service.required_year
+        )
 
     today = timezone.now().date()
     event_last_day = service.end_date
@@ -935,6 +963,7 @@ def organization_view_applicants(request, service_id):
         "service": service,
         "selected_apps": selected_apps,
         "rejected_apps": rejected_apps,
+        "waitlist_apps": waitlist_apps,
         "applied_apps": applied_apps,
         "event_active": event_active,
         "today": today,
@@ -942,6 +971,7 @@ def organization_view_applicants(request, service_id):
         "marked_ids_today": marked_ids_today,
         "unmarked_exists": unmarked_exists,
         "rating_open": rating_open,
+        "remaining_seats": remaining_seats,
     }
 
     return render(request, "organization/view_applicants.html", context)
@@ -961,9 +991,8 @@ def org_approve_volunteer(request, app_id):
     app.save()
 
     return redirect(
-        "org_view_applicants",
-        service_id=app.service.id
-    )
+    f"/organization/service/{app.service.id}/applications/?tab=applied"
+)
 
 
 @login_required
@@ -980,9 +1009,8 @@ def org_reject_volunteer(request, app_id):
     app.save()
 
     return redirect(
-        "org_view_applicants",
-        service_id=app.service.id
-    )
+    f"/organization/service/{app.service.id}/applications/?tab=applied"
+)
 
 
 @require_POST
@@ -1439,15 +1467,26 @@ def auto_select_volunteers(request, service_id):
     # STEP 8: Final Status Update
     # ---------------------------------------
 
-    # Reject all first
-    Application.objects.filter(
-        service=service
-    ).update(status="REJECTED")
+        # Reject all first
+    Application.objects.filter(service=service).update(status="REJECTED")
 
-    # Select chosen ones
+    # Select top required
+    selected_ids = [app.id for app in selected_list]
+
     Application.objects.filter(
         id__in=selected_ids
     ).update(status="SELECTED")
+
+    # Create waitlist from remaining high scores
+    remaining_apps = [app for app in applications if app.id not in selected_ids]
+
+    waitlist_count = 3   # 🔥 You can control this number
+
+    waitlist_ids = [app.id for app in remaining_apps[:waitlist_count]]
+
+    Application.objects.filter(
+        id__in=waitlist_ids
+    ).update(status="WAITLIST")
 
     print("TOTAL APPLIED:", total_applied)
     print("FRESHERS:", fresher_count)
@@ -1539,4 +1578,159 @@ def view_volunteer_profile(request, volunteer_id):
         request,
         "organization/volunteer_profile.html",
         context
+    )
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+
+@login_required
+def promote_waitlist(request, app_id):
+
+    # First get the application
+    application = get_object_or_404(Application, id=app_id)
+    service = application.service
+
+    # Security check
+    if service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    # Count selected volunteers
+    selected_count = Application.objects.filter(
+        service=service,
+        status="SELECTED"
+    ).count()
+
+    # Promote only if seats available
+    if selected_count < service.max_volunteers:
+        application.status = "SELECTED"
+        application.save()
+
+    # Redirect to Selected tab
+    url = reverse("org_view_applicants", args=[service.id])
+    return redirect(f"{url}?tab=selected")
+@login_required
+def manual_select_volunteer(request, app_id):
+
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    application = get_object_or_404(Application, id=app_id)
+    service = application.service
+
+    # Security check
+    if service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    # Check max capacity
+    selected_count = Application.objects.filter(
+        service=service,
+        status="SELECTED"
+    ).count()
+
+    if selected_count >= service.max_volunteers:
+        return redirect("org_view_applicants", service_id=service.id)
+
+    # Select this volunteer
+    application.status = "SELECTED"
+    application.save()
+    
+
+    return redirect("org_view_applicants", service_id=service.id)
+
+@login_required
+def waitlist_volunteer(request, app_id):
+
+    application = get_object_or_404(Application, id=app_id)
+    service = application.service
+
+    if service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    application.status = "WAITLIST"
+    application.save()
+
+    return redirect(
+    f"/organization/service/{service.id}/applications/?tab=applied"
+)
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Application
+
+@login_required
+def approve_volunteer(request, app_id):
+
+    application = get_object_or_404(Application, id=app_id)
+    service = application.service
+
+    # Security check
+    if service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    # Count already selected
+    selected_count = Application.objects.filter(
+        service=service,
+        status="SELECTED"
+    ).count()
+
+    # If seats available → select
+    if selected_count < service.max_volunteers:
+        application.status = "SELECTED"
+        application.save()
+
+    return redirect("org_view_applicants", service_id=service.id)
+
+@login_required
+def request_absence(request, app_id):
+
+    application = get_object_or_404(
+        Application,
+        id=app_id,
+        volunteer__user=request.user,
+        status="SELECTED"
+    )
+
+    application.absence_requested = True
+    application.save()
+    print("ABSENCE SAVED FOR:", application.id, application.absence_requested)
+
+    return redirect("volunteer_dashboard")
+
+@login_required
+def approve_absence(request, app_id):
+
+    application = get_object_or_404(Application, id=app_id)
+    service = application.service
+
+    if service.organization.user != request.user:
+        return redirect("organization_dashboard")
+
+    # STEP 1 — Remove selected volunteer
+    application.absence_approved = True
+    application.status = "ABSENT"
+    application.save()
+    application.refresh_from_db()
+    print("AFTER:", application.id, application.status)
+
+    # STEP 2 — Count current selected volunteers
+    selected_count = Application.objects.filter(
+        service=service,
+        status="SELECTED"
+    ).count()
+
+    required = service.max_volunteers
+
+    # STEP 3 — If seats available, promote
+    if selected_count < required:
+
+        next_waitlisted = Application.objects.filter(
+            service=service,
+            status="WAITLIST"
+        ).first()
+
+        if next_waitlisted:
+            next_waitlisted.status = "SELECTED"
+            next_waitlisted.save()
+
+    return redirect(
+        reverse("org_view_applicants", args=[service.id]) + "?tab=selected"
     )

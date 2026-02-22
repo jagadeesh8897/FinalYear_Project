@@ -2,46 +2,34 @@
 {% block content %}
 
 <style>
-/* ---------- LAYOUT ---------- */
 .lower-grid{
     display:grid;
     grid-template-columns:2fr 1fr;
     gap:24px;
     margin-top:30px;
 }
-
 @media(max-width:900px){
     .lower-grid{
         grid-template-columns:1fr;
     }
 }
-
-/* ---------- UPCOMING SERVICES ---------- */
 .upcoming-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
     gap:20px;
     margin-top:16px;
 }
-
 .upcoming-card{
     background:white;
     padding:20px;
     border-radius:16px;
     box-shadow:0 14px 35px rgba(0,0,0,.08);
     transition:all .35s ease;
-    animation:fadeUp .6s ease;
 }
-
 .upcoming-card:hover{
     transform:translateY(-6px);
     box-shadow:0 22px 55px rgba(79,70,229,.25);
 }
-
-.upcoming-card h4{
-    margin:0 0 8px;
-}
-
 .view-btn{
     display:inline-block;
     margin-top:12px;
@@ -49,16 +37,12 @@
     font-weight:600;
     text-decoration:none;
 }
-
-@keyframes fadeUp{
-    from{opacity:0;transform:translateY(14px)}
-    to{opacity:1;transform:translateY(0)}
-}
 </style>
 
 <h1 class="welcome">
-    Welcome, {{ profile.full_name }}! 👋
+    Welcome, {{ profile.full_name }} 👋
 </h1>
+
 <p class="subtitle">
     Track your volunteer journey and discover new opportunities
 </p>
@@ -70,36 +54,24 @@
         <div class="icon">✔</div>
         <h2>{{ completed }}</h2>
         <p>Completed Services</p>
-        <small>Start volunteering!</small>
     </div>
 
     <div class="stat-card blue">
         <div class="icon">📅</div>
-        <h2 class="
-{% if overall_attendance >= 75 %}text-green
-{% elif overall_attendance >= 50 %}text-yellow
-{% else %}text-red
-{% endif %}
-">
-{{ overall_attendance }}%
-</h2>
+        <h2>{{ overall_attendance }}%</h2>
         <p>Attendance Rate</p>
     </div>
 
-<div class="stat-card yellow">
-    <div class="icon">⭐</div>
-
-    {% if profile.rating %}
-        <h2>⭐ {{ profile.rating }}/5</h2>
-        <p>Average Rating</p>
-    {% else %}
-        <h2>N/A</h2>
-        <p>No Rating Yet</p>
-        <small>Complete services to get rated</small>
-    {% endif %}
-
-</div>
-
+    <div class="stat-card yellow">
+        <div class="icon">⭐</div>
+        {% if profile.rating %}
+            <h2>{{ profile.rating }}/5</h2>
+            <p>Average Rating</p>
+        {% else %}
+            <h2>N/A</h2>
+            <p>No Rating Yet</p>
+        {% endif %}
+    </div>
 
     <div class="stat-card cyan">
         <div class="icon">⏱</div>
@@ -112,64 +84,82 @@
 <!-- ================= LOWER GRID ================= -->
 <div class="lower-grid">
 
-    <!-- -------- UPCOMING SERVICES (LEFT) -------- -->
+    <!-- UPCOMING SERVICES -->
     <div class="card">
         <div class="card-header">
             <h3>Your Upcoming Services</h3>
-            <a href="{% url 'volunteer_services' %}">View All →</a>
         </div>
 
         {% if upcoming_services %}
             <div class="upcoming-grid">
+
                 {% for s in upcoming_services %}
-                    <div class="upcoming-card">
-                         <h4>{{ s.service.title }}</h4>
+                <div class="upcoming-card">
 
- <p><strong>Organization:</strong> {{ s.organization.organization_name }}</p>
-<p><strong>Email:</strong> {{ s.organization.user.email }}</p>
+                    <h4>{{ s.service.title }}</h4>
 
-<p>📍 {{ s.location }}</p>
-<p>📅 {{ s.start_date }}</p>
-<p>📅 {{ s.end_date }}</p>
+                    <p><strong>Organization:</strong> {{ s.service.organization.organization_name }}</p>
+                    <p><strong>Email:</strong> {{ s.service.organization.user.email }}</p>
+                    <p>📍 {{ s.service.location }}</p>
+                    <p>📅 {{ s.service.start_date }}</p>
+                    <p>📅 {{ s.service.end_date }}</p>
 
+                    <!-- ABSENCE SECTION -->
+                    {% if s.status == "SELECTED" %}
 
+                        {% if not s.absence_requested %}
+                            <form method="post" action="{% url 'request_absence' s.id %}">
+                                {% csrf_token %}
+                                <button style="
+                                    margin-top:10px;
+                                    background:#ef4444;
+                                    color:white;
+                                    padding:8px 14px;
+                                    border:none;
+                                    border-radius:8px;
+                                    cursor:pointer;">
+                                    Request Absence
+                                </button>
+                            </form>
 
-                        <a href="{% url 'volunteer_services' %}" class="view-btn">
-                            View Details →
-                        </a>
+                        {% elif s.absence_requested and not s.absence_approved %}
+                            <p style="color:orange;font-weight:600;margin-top:8px;">
+                                Absence Requested (Waiting for approval)
+                            </p>
 
-                    </div>
+                        {% elif s.absence_approved %}
+                            <p style="color:red;font-weight:600;margin-top:8px;">
+                                Absence Approved
+                            </p>
+                        {% endif %}
+
+                    {% endif %}
+
+                    <a href="{% url 'volunteer_services' %}" class="view-btn">
+                        View Details →
+                    </a>
+
+                </div>
                 {% endfor %}
+
             </div>
         {% else %}
-            <div class="empty-box">
-                📋
-                <p>No upcoming services</p>
-                <span>Apply for services to get started!</span>
-            </div>
+            <p>No upcoming services</p>
         {% endif %}
     </div>
 
-    <!-- -------- PROGRESS (RIGHT) -------- -->
+    <!-- PROGRESS -->
     <div class="card">
         <h3>Your Progress</h3>
-
-        <p class="goal">
-            Service Goal <b>{{ completed }}/10</b> completed
-        </p>
-
-        <div class="progress-bar">
-           <div class="progress-fill" style="width: {{ completed|add:0 }}0%;"></div>
-
-        </div>
+        <p>Service Goal <b>{{ completed }}/10</b> completed</p>
 
         <div class="mini-stats">
             <div>
-                <h2>{{ applied_count|default:0 }}</h2>
+                <h2>{{ applied_count }}</h2>
                 <p>Applied</p>
             </div>
             <div>
-                <h2>{{ selected_count|default:0 }}</h2>
+                <h2>{{ selected_count }}</h2>
                 <p>Selected</p>
             </div>
         </div>

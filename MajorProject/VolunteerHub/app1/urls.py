@@ -74,4 +74,37 @@ path(
     name='reject_org'
 ),
 
+path(
+    "organization/application/<int:app_id>/promote/",
+    views.promote_waitlist,
+    name="promote_waitlist"
+),
+path(
+    "organization/application/<int:app_id>/manual-select/",
+    views.manual_select_volunteer,
+    name="manual_select_volunteer"
+),
+path(
+    "organization/application/<int:app_id>/approve/",
+    views.approve_volunteer,
+    name="approve_volunteer"
+),
+
+path(
+    "organization/application/<int:app_id>/waitlist/",
+    views.waitlist_volunteer,
+    name="waitlist_volunteer"
+),
+
+path(
+    "volunteer/application/<int:app_id>/request-absence/",
+    views.request_absence,
+    name="request_absence"
+),
+path(
+    "organization/application/<int:app_id>/approve-absence/",
+    views.approve_absence,
+    name="approve_absence"
+),
 ]
+

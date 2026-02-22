@@ -31,6 +31,17 @@ class VolunteerProfile(models.Model):
 
     rating = models.FloatField(default=0)
     attendance = models.IntegerField(default=0)
+    GENDER_CHOICES = (
+        ("MALE", "Male"),
+        ("FEMALE", "Female"),
+        ("OTHER", "Other"),
+    )
+
+    gender = models.CharField(
+        max_length=10,
+        choices=GENDER_CHOICES,
+        blank=True
+    )
 
     @property
     def skill_list(self):
@@ -68,6 +79,23 @@ class Service(models.Model):
     end_date = models.DateField()
 
     max_volunteers = models.IntegerField()
+    GENDER_PREF = (
+    ("ANY", "Any"),
+    ("MALE", "Male"),
+    ("FEMALE", "Female"),
+)
+
+    required_gender = models.CharField(
+        max_length=10,
+        choices=GENDER_PREF,
+        default="ANY"
+    )
+
+    required_year = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
 
     organization = models.ForeignKey(
         Organization,
@@ -99,10 +127,14 @@ class Application(models.Model):
     STATUS_CHOICES = [
         ("APPLIED", "Applied"),
         ("SELECTED", "Selected"),
+        ("WAITLIST", "Waitlist"),
         ("REJECTED", "Rejected"),
+       
         ("COMPLETED", "Completed"),
         ("CLOSED", "Closed"),
+        ("ABSENT", "Absent"),
     ]
+
 
     volunteer = models.ForeignKey(VolunteerProfile, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
@@ -110,6 +142,8 @@ class Application(models.Model):
     submission_text = models.TextField(blank=True)
     rating = models.IntegerField(default=0)
     review = models.TextField(blank=True)
+    absence_requested = models.BooleanField(default=False)
+    absence_approved = models.BooleanField(default=False)
 
 
 class Attendance(models.Model):
