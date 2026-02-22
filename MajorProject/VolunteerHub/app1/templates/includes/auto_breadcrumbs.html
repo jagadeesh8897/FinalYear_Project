@@ -1,0 +1,19 @@
+{% load breadcrumbs %}
+{% generate_breadcrumbs as crumbs %}
+
+<div style="padding:15px 40px;">
+    <nav style="background:#f1f5f9;padding:12px 18px;border-radius:12px;">
+        {% for name, url in crumbs %}
+            {% if forloop.last %}
+                <span style="font-weight:600;color:#111827;">
+                    {{ name }}
+                </span>
+            {% else %}
+                <a href="{{ url }}" style="text-decoration:none;color:#4f46e5;">
+                    {{ name }}
+                </a>
+                <span style="margin:0 6px;">›</span>
+            {% endif %}
+        {% endfor %}
+    </nav>
+</div>

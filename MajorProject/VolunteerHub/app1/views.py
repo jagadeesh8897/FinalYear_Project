@@ -201,12 +201,44 @@ def organization_dashboard_page(request):
     if request.user.role != "ORGANIZATION":
         return redirect("login")
 
-    org = Organization.objects.get(user=request.user)
+    org = request.user.organization
+
     services = Service.objects.filter(organization=org)
 
-    return render(request, "organization/dashboard.html", {
-        "services": services
-    })
+    approved_count = services.filter(status="APPROVED").count()
+    pending_count = services.filter(status="PENDING").count()
+
+    # 🔥 Total Applicants Across All Works
+    total_applicants = Application.objects.filter(
+        service__organization=org
+    ).count()
+
+    # 🔥 Total Selected Volunteers
+    total_selected = Application.objects.filter(
+        service__organization=org,
+        status="SELECTED"
+    ).count()
+
+    # 🔥 Total Completed Volunteers
+    total_completed = Application.objects.filter(
+        service__organization=org,
+        status="COMPLETED"
+    ).count()
+
+    context = {
+        "services": services,
+        "approved_count": approved_count,
+        "pending_count": pending_count,
+        "total_applicants": total_applicants,
+        "total_selected": total_selected,
+        "total_completed": total_completed,
+    }
+
+    return render(
+        request,
+        "organization/dashboard.html",
+        context
+    )
 
 
 @login_required
@@ -1041,21 +1073,29 @@ from .models import VolunteerProfile
 
 @login_required
 def volunteer_profile(request):
-    profile = VolunteerProfile.objects.get(user=request.user)
+
+    profile, created = VolunteerProfile.objects.get_or_create(
+        user=request.user
+    )
 
     if request.method == "POST":
 
-        # Basic fields
-        profile.full_name = request.POST.get("full_name")
-        profile.phone = request.POST.get("phone")
-        profile.year = request.POST.get("year")
+        # Only update if field exists in POST
+        if request.POST.get("full_name"):
+            profile.full_name = request.POST.get("full_name")
 
-        # Skills (hidden input)
+        if request.POST.get("phone"):
+            profile.phone = request.POST.get("phone")
+
+        if request.POST.get("year"):
+            profile.year = request.POST.get("year")
+
+        # Skills
         skills = request.POST.get("skills")
-        if skills:
+        if skills is not None:
             profile.skills = skills
 
-        # Save images if uploaded
+        # Images
         if request.FILES.get("photo"):
             profile.photo = request.FILES.get("photo")
 
@@ -1066,8 +1106,11 @@ def volunteer_profile(request):
 
         return redirect("/volunteer/profile/?updated=true")
 
-    return render(request, "volunteer/profile.html", {"profile": profile})
-
+    return render(
+        request,
+        "volunteer/profile.html",
+        {"profile": profile}
+    )
 
 @login_required
 def admin_approved_organizations(request):
@@ -1452,4 +1495,48 @@ def edit_organization_profile(request):
         request,
         "organization/edit_profile.html",
         {"organization": organization}
+    )
+
+@login_required
+def view_volunteer_profile(request, volunteer_id):
+
+    if request.user.role != "ORGANIZATION":
+        return redirect("login")
+
+    volunteer = get_object_or_404(
+        VolunteerProfile,
+        id=volunteer_id
+    )
+
+    # Previous completed events count
+    completed_count = Application.objects.filter(
+        volunteer=volunteer,
+        status="COMPLETED"
+    ).count()
+
+    # Attendance percentage
+    total_att = Attendance.objects.filter(
+        application__volunteer=volunteer
+    ).count()
+
+    present_att = Attendance.objects.filter(
+        application__volunteer=volunteer,
+        is_present=True
+    ).count()
+
+    attendance_percentage = (
+        round((present_att / total_att) * 100, 2)
+        if total_att > 0 else 0
+    )
+
+    context = {
+        "volunteer": volunteer,
+        "completed_count": completed_count,
+        "attendance_percentage": attendance_percentage,
+    }
+
+    return render(
+        request,
+        "organization/volunteer_profile.html",
+        context
     )

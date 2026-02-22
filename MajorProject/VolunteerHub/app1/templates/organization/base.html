@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -13,10 +13,46 @@
         .page{
             padding:30px 50px;
         }
+
+.breadcrumb-wrapper{
+    padding:18px 30px;
+    background:#f9fafb;
+    border-radius:12px;
+    margin-bottom:25px;
+}
+
+.breadcrumb{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    font-size:15px;
+}
+
+.breadcrumb-link{
+    text-decoration:none;
+    color:#4f46e5;
+    font-weight:500;
+    transition:0.3s;
+}
+
+.breadcrumb-link:hover{
+    color:#111827;
+}
+
+.breadcrumb-separator{
+    margin:0 8px;
+    color:#9ca3af;
+}
+
+.breadcrumb-current{
+    font-weight:600;
+    color:#111827;
+}
+
     </style>
 </head>
 <body>
-
+{% include "includes/auto_breadcrumbs.html" %}
 <div class="page">
     {% block content %}{% endblock %}
 </div>

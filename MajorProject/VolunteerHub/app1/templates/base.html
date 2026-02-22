@@ -5,13 +5,14 @@
     <title>VolunteerHub</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
+
 <body>
 
 <header>
 </header>
 
 <hr>
-
+{% include "includes/auto_breadcrumbs.html" %}
 {% block content %}{% endblock %}
 
 <script src="{% static 'js/main.js' %}"></script>

@@ -175,25 +175,33 @@ body{
 
     <!-- ================= STATS SECTION ================= -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <h3>{{ services|length }}</h3>
-            <p>Total Works Created</p>
-        </div>
 
-        <div class="stat-card">
-            <h3>{{ approved_count }}</h3>
-            <p>Approved Works</p>
-        </div>
+    <div class="stat-card">
+        <h3>{{ services|length }}</h3>
+        <p>Total Works Created</p>
+    </div>
 
-        <div class="stat-card">
-            <h3>{{ pending_count }}</h3>
-            <p>Pending Approval</p>
-        </div>
+    <div class="stat-card">
+        <h3>{{ approved_count }}</h3>
+        <p>Approved Works</p>
+    </div>
 
-        <div class="stat-card">
-            <h3>{{ total_applicants }}</h3>
-            <p>Total Applicants</p>
-        </div>
+    <div class="stat-card">
+        <h3>{{ pending_count }}</h3>
+        <p>Pending Approval</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>{{ total_selected }}</h3>
+        <p>Selected Volunteers</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>{{ total_completed }}</h3>
+        <p>Completed Volunteers</p>
+    </div>
+
+</div>
     </div>
 
     <!-- ================= CREATE BUTTON ================= -->

@@ -144,7 +144,6 @@
 <!-- ================= HEADER ================= -->
 
 <div class="top-bar">
-    <a href="javascript:history.back()" class="back-btn">← Back</a>
     <h1>Applicants — {{ service.title }}</h1>
 </div>
 
@@ -254,7 +253,11 @@
 
         {% for app in applied_apps %}
         <tr>
-            <td>{{ app.volunteer.full_name }}</td>
+            <td>
+    <a href="{% url 'view_volunteer_profile' app.volunteer.id %}">
+        {{ app.volunteer.full_name }}
+    </a>
+</td>
             <td>{{ app.volunteer.year }}</td>
             <td>{{ app.volunteer.department }}</td>
 

@@ -37,6 +37,11 @@ urlpatterns = [
     path('organization/application/<int:app_id>/rate/',views.rate_volunteer,name='rate_volunteer'),
     path("organization/profile/", views.organization_profile, name="organization_profile"),
     path("organization/profile/edit/", views.edit_organization_profile, name="edit_organization_profile"),
+path(
+    "organization/volunteer/<int:volunteer_id>/",
+    views.view_volunteer_profile,
+    name="view_volunteer_profile"
+),
 
 
     # ADMIN PANEL (CUSTOM)
