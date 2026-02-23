@@ -312,6 +312,10 @@ def admin_approve_service(request, service_id):
 
 
 # ==================== ADMIN MODULE ====================
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import VolunteerProfile
+
 @login_required
 def admin_volunteers(request):
     if request.user.role != 'ADMIN':
@@ -344,8 +348,9 @@ def admin_volunteers(request):
 
     # ---- Branch counts (ONLY final year) ----
     branches = ["CSE", "ECE", "EEE", "MECH", "CIVIL"]
+
     branch_counts = {
-        b: sum(1 for v in volunteers if v.norm_year == "4" and v.department == b)
+        b: VolunteerProfile.objects.filter(department=b).count()
         for b in branches
     }
 
@@ -361,7 +366,6 @@ def admin_volunteers(request):
         "year_counts": year_counts,
         "branch_counts": branch_counts,
     })
-
 
 @login_required
 def admin_pending_organizations(request):
