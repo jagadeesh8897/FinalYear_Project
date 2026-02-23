@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
 <style>
 
 body{
@@ -34,8 +33,9 @@ body{
 /* ===== CARD GRID ===== */
 .cards{
     display:grid;
-    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
-    gap:25px;
+    grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
+    gap:30px;
+    margin-bottom:40px;
 }
 
 /* ===== CARD STYLE ===== */
@@ -44,9 +44,7 @@ body{
     backdrop-filter: blur(18px);
     border-radius: 20px;
     padding: 28px;
-    position: relative;
-    overflow: hidden;
-    transition: all .4s ease;
+    transition: all .3s ease;
     border: 1px solid rgba(255,255,255,0.15);
     box-shadow: 0 20px 40px rgba(0,0,0,.35);
     text-decoration: none;
@@ -54,31 +52,8 @@ body{
 }
 
 .card:hover{
-    transform: translateY(-10px) scale(1.03);
-    box-shadow: 0 30px 60px rgba(0,0,0,.5);
-}
-
-/* Glowing border animation */
-.card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius:20px;
-    padding:2px;
-    background: linear-gradient(45deg,#6366f1,#8b5cf6,#ec4899,#6366f1);
-    background-size:300% 300%;
-    animation: borderGlow 6s linear infinite;
-    -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-}
-
-@keyframes borderGlow{
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
+    transform: translateY(-6px);
+    box-shadow: 0 25px 50px rgba(0,0,0,.5);
 }
 
 .label{
@@ -124,11 +99,10 @@ body{
 }
 
 .action-btn:hover{
-    transform: translateY(-5px) scale(1.05);
+    transform: translateY(-5px);
     box-shadow:0 25px 55px rgba(139,92,246,.7);
 }
 
-/* ===== BADGE ===== */
 .badge{
     position:absolute;
     top:-10px;
@@ -139,10 +113,11 @@ body{
     font-weight:bold;
     padding:6px 10px;
     border-radius:50%;
-    box-shadow:0 8px 20px rgba(0,0,0,.4);
 }
 
 </style>
+
+
 <div class="admin-container">
 
     <div class="admin-title">👋 Welcome, Admin</div>
@@ -150,30 +125,24 @@ body{
     <!-- DASHBOARD CARDS -->
     <div class="cards">
 
-        <!-- Volunteers -->
         <a href="{% url 'admin_volunteers' %}" class="card">
             <div class="label">Total Volunteers</div>
             <div class="count">{{ volunteers }}</div>
             <div class="sub">Year-wise breakdown available</div>
         </a>
 
-        <!-- Approved Organizations -->
-        <!-- Approved Organizations -->
-<div class="card">
-    <div class="label">Approved Organizations</div>
-    <div class="count">{{ organizations }}</div>
-    <div class="sub">Verified partners</div>
-</div>
+        <a href="{% url 'admin_approved_organizations' %}" class="card">
+            <div class="label">Approved Organizations</div>
+            <div class="count">{{ organizations }}</div>
+            <div class="sub">Verified partners</div>
+        </a>
 
-
-        <!-- Active Works -->
         <a href="{% url 'admin_active_works' %}" class="card">
             <div class="label">Active Works</div>
             <div class="count">{{ active }}</div>
             <div class="sub">Ongoing services</div>
         </a>
 
-        <!-- Completed Works -->
         <a href="{% url 'admin_completed_works' %}" class="card">
             <div class="label">Completed Works</div>
             <div class="count">{{ completed }}</div>
@@ -187,17 +156,15 @@ body{
 
     <div class="actions">
 
-       <a href="{% url 'pending_orgs' %}" class="action-btn">
-    ⏳ Pending Organization Requests
-    <span class="badge">{{ pending_org_count|default:0 }}</span>
-</a>
+        <a href="{% url 'pending_orgs' %}" class="action-btn">
+            ⏳ Pending Organization Requests
+            <span class="badge">{{ pending_org_count|default:0 }}</span>
+        </a>
 
-<a href="{% url 'admin_pending_services' %}" class="action-btn">
-    🛠 Pending Service Approvals
-    <span class="badge">{{ pending_service_count|default:0 }}</span>
-</a>
-
-
+        <a href="{% url 'admin_pending_services' %}" class="action-btn">
+            🛠 Pending Service Approvals
+            <span class="badge">{{ pending_service_count|default:0 }}</span>
+        </a>
 
     </div>
 

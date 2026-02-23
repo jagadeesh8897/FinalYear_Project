@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+body{
+    background:#f4f6fb;
+    font-family:'Segoe UI',sans-serif;
+}
+
+.container{
+    padding:40px;
+}
+
+.profile-card{
+    background:white;
+    padding:30px;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.05);
+    max-width:700px;
+}
+
+.profile-card h2{
+    margin-bottom:20px;
+    color:#111827;
+}
+
+.info{
+    margin-bottom:14px;
+    font-size:15px;
+}
+
+.label{
+    font-weight:600;
+    color:#374151;
+}
+
+</style>
+
+<div class="container">
+
+<div class="profile-card">
+    <h2>{{ organization.organization_name }}</h2>
+
+    <div class="info">
+        <span class="label">Contact Person:</span>
+        {{ organization.user.username }}
+    </div>
+
+    <div class="info">
+        <span class="label">Email:</span>
+        {{ organization.user.email }}
+    </div>
+
+    <div class="info">
+        <span class="label">Phone:</span>
+        {{ organization.phone }}
+    </div>
+
+    <div class="info">
+        <span class="label">Address:</span>
+        {{ organization.address }}
+    </div>
+
+    <div class="info">
+        <span class="label">Description:</span>
+        {{ organization.description }}
+    </div>
+
+    <div class="info">
+        <span class="label">Status:</span>
+        {{ organization.status }}
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

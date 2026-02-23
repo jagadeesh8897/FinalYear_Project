@@ -122,4 +122,9 @@ path(
     views.organization_service_detail,
     name='organization_service_detail'
 ),
+
+path("panel/approved-organizations/", views.admin_approved_organizations, name="admin_approved_organizations"),
+path("panel/organization/<int:org_id>/", views.admin_organization_detail, name="admin_organization_detail"),
+
+path('panel/', views.admin_dashboard_page, name='panel_home'),
 ]

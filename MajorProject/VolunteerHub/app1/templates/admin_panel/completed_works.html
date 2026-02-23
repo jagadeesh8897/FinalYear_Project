@@ -1,26 +1,147 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
 
-<h2>Completed Works</h2>
+<style>
+body{
+    background:#0f172a;
+    font-family:'Segoe UI',sans-serif;
+    color:#e2e8f0;
+}
 
-<table>
-    <tr>
-        <th>Title</th>
-        <th>Organization</th>
-        <th>Date</th>
-    </tr>
+.page{
+    padding:30px;
+}
 
-    {% for s in services %}
-    <tr>
-        <td>{{ s.title }}</td>
-        <td>{{ s.organization.organization_name }}</td>
-        <td>{{ s.date }}</td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="3">No completed works</td>
-    </tr>
-    {% endfor %}
-</table>
+h1{
+    font-size:30px;
+    font-weight:700;
+    color:#f8fafc;
+    margin-bottom:8px;
+}
+
+.subtitle{
+    color:#94a3b8;
+    margin-bottom:30px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:22px;
+    margin-bottom:40px;
+}
+
+.card{
+    background:#1e293b;
+    border-radius:16px;
+    padding:24px;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.count{
+    font-size:38px;
+    font-weight:800;
+    color:#ffffff;
+}
+
+/* ===== WORK GRID ===== */
+.work-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:24px;
+}
+
+/* ===== WORK CARD ===== */
+.work-card{
+    background:#1e293b;
+    border-radius:16px;
+    padding:24px;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.work-title{
+    font-size:18px;
+    font-weight:600;
+    color:#ffffff;
+    margin-bottom:6px;
+}
+
+.org{
+    color:#94a3b8;
+    margin-bottom:14px;
+}
+
+.meta{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    font-size:14px;
+    color:#cbd5e1;
+    margin-bottom:16px;
+}
+
+.status{
+    display:inline-block;
+    padding:6px 14px;
+    border-radius:20px;
+    background:#64748b;
+    color:#ffffff;
+    font-weight:600;
+    font-size:12px;
+}
+
+.btn{
+    display:inline-block;
+    padding:10px 18px;
+    background:#475569;
+    color:#ffffff;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:600;
+}
+</style>
+
+<div class="page">
+
+<h1>✅ Completed Works</h1>
+<p class="subtitle">Successfully finished volunteer services</p>
+
+<!-- SUMMARY CARD -->
+<div class="cards">
+    <div class="card">
+        <h3>Completed Services</h3>
+        <div class="count">{{ completed_count }}</div>
+    </div>
+</div>
+
+<!-- COMPLETED WORKS GRID -->
+<div class="work-grid">
+
+{% for s in services %}
+<div class="work-card">
+
+    <div class="work-title">🌟 {{ s.title }}</div>
+    <div class="org">{{ s.organization.organization_name }}</div>
+
+    <div class="meta">
+        <div>📍 {{ s.location }}</div>
+        <div>📅 {{ s.start_date }} - {{ s.end_date }}</div>
+        <div>👥 {{ s.max_volunteers }} Volunteers</div>
+        <div><span class="status">COMPLETED</span></div>
+    </div>
+
+    <div style="margin-top:15px; border-top:1px solid #334155; padding-top:15px;">
+        <p><strong>Description:</strong> {{ s.description }}</p>
+        <p><strong>Required Gender:</strong> {{ s.required_gender }}</p>
+        <p><strong>Required Year:</strong> {{ s.required_year }}</p>
+    </div>
+
+</div>
+{% empty %}
+<p>No completed works available.</p>
+{% endfor %}
+
+</div>
+</div>
 
 {% endblock %}

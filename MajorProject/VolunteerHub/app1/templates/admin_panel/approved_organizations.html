@@ -1,19 +1,262 @@
-{% extends "admin_panel/base_admin.html" %}
+{% extends "base.html" %}
 {% block content %}
+
+<style>
+
+body{
+    background:#f4f6fb;
+    font-family:'Segoe UI',sans-serif;
+}
+
+.page{
+    padding:40px;
+}
+
+/* Title */
+h2{
+    margin-bottom:25px;
+    font-size:28px;
+    font-weight:700;
+    color:#111827;
+}
+
+/* Table */
+.table-wrapper{
+    background:white;
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.05);
+}
+
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    background: white;
+    width: 70%;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.close-btn {
+    float: right;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.doc-btn {
+    background:#111827;
+    color:white;
+    padding:6px 12px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+
+.close{
+    position:absolute;
+    right:20px;
+    top:15px;
+    font-size:22px;
+    cursor:pointer;
+}
+
+.view-btn{
+    padding:6px 14px;
+    background:#111827;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+thead{
+    background:#111827;
+    color:white;
+}
+
+th{
+    padding:14px;
+    text-align:left;
+    font-weight:600;
+}
+
+td{
+    padding:14px;
+    border-bottom:1px solid #e5e7eb;
+}
+
+tbody tr:hover{
+    background:#f9fafb;
+}
+
+.doc-btn{
+    padding:6px 12px;
+    background:#111827;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+    font-size:13px;
+}
+
+.doc-btn:hover{
+    background:#374151;
+}
+
+/* Button */
+.view-btn{
+    padding:6px 14px;
+    background:#111827;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+    font-size:13px;
+    transition:0.3s;
+}
+
+.view-btn:hover{
+    background:#374151;
+}
+
+.empty{
+    text-align:center;
+    padding:20px;
+    color:#6b7280;
+}
+
+</style>
+
+<div class="page">
 
 <h2>Approved Organizations</h2>
 
-{% if organizations %}
-    <ul>
-    {% for org in organizations %}
-        <li>
-            <strong>{{ org.organization_name }}</strong>
-            ({{ org.user.email }})
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No approved organizations yet.</p>
-{% endif %}
+<div class="table-wrapper">
 
+<table>
+    <thead>
+<tr>
+    <th>Organization Name</th>
+    <th>Contact Person</th>
+    <th>Email</th>
+    <th>Phone</th>
+    <th>Approval Letter</th>
+    <th>Services Created</th>
+</tr>
+</thead>
+
+<tbody>
+{% for org in organizations %}
+<tr>
+    <!-- Organization Name -->
+    <td>{{ org.organization_name }}</td>
+
+    <!-- Contact Person -->
+    <td>{{ org.organization_name }}</td>
+
+    <!-- Email (from user model) -->
+    <td>{{ org.user.email }}</td>
+
+    <!-- Phone -->
+    <td>{{ org.phone }}</td>
+
+    <!-- Approval Letter -->
+    <td>
+    {% if org.verification_letter %}
+        <a href="{{ org.verification_letter.url }}"
+           target="_blank"
+           class="doc-btn">
+           View Letter
+        </a>
+    {% else %}
+        Not Uploaded
+    {% endif %}
+</td>
+
+    <!-- Services Count -->
+    <td>{{ org.service_set.count }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</div>
+</div>
+
+<!-- MODAL -->
+<div id="profileModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+
+        <h2 id="orgName"></h2>
+
+        <p><strong>Full Name:</strong> <span id="orgFullName"></span></p>
+        <p><strong>Email:</strong> <span id="orgEmail"></span></p>
+        <p><strong>Phone:</strong> <span id="orgPhone"></span></p>
+        
+        <p><strong>Address:</strong> <span id="orgAddress"></span></p>
+        
+        <p><strong>Services Created:</strong> <span id="orgServices"></span></p>
+
+    </div>
+</div>
+<script>
+
+function openModal(name, fullName, email, phone, gender, address, description, services){
+
+    document.getElementById("orgName").innerText = name;
+    document.getElementById("orgFullName").innerText = fullName;
+    document.getElementById("orgEmail").innerText = email;
+    document.getElementById("orgPhone").innerText = phone;
+
+    document.getElementById("orgAddress").innerText = address;
+
+    document.getElementById("orgServices").innerText = services;
+
+    document.getElementById("profileModal").style.display = "block";
+}
+
+function closeModal(){
+    document.getElementById("profileModal").style.display = "none";
+}
+
+window.onclick = function(event){
+    if(event.target == document.getElementById("profileModal")){
+        closeModal();
+    }
+}
+
+
+function openLetter(url){
+    document.getElementById("letterFrame").src = url;
+    document.getElementById("letterModal").style.display = "block";
+}
+
+function closeLetter(){
+    document.getElementById("letterModal").style.display = "none";
+    document.getElementById("letterFrame").src = "";
+}
+
+
+</script>
+<div id="letterModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeLetter()">&times;</span>
+        <iframe id="letterFrame" width="100%" height="500px"></iframe>
+    </div>
+</div>
 {% endblock %}

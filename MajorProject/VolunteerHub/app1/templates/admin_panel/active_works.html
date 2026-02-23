@@ -130,6 +130,30 @@ h1{
 .btn:hover{
     background:#2563eb;
 }
+.details{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.4s ease;
+    font-size:14px;
+    color:#cbd5e1;
+    margin-top:10px;
+}
+
+.details.open{
+    max-height:500px;
+}
+
+.details hr{
+    border:none;
+    border-top:1px solid rgba(255,255,255,0.08);
+    margin:15px 0;
+}
+
+.letter-link{
+    color:#3b82f6;
+    font-weight:600;
+    text-decoration:none;
+}
 </style>
 <div class="page">
 
@@ -159,23 +183,50 @@ h1{
 
 {% for s in services %}
 <div class="work-card">
+
     <div class="work-title">🌟 {{ s.title }}</div>
     <div class="org">{{ s.organization.organization_name }}</div>
 
     <div class="meta">
         <div>📍 {{ s.location }}</div>
-        <div>📅 {{ s.date }}</div>
-        <div>👥 {{ s.required_volunteers }} Volunteers</div>
+        <div>📅 {{ s.start_date }} - {{ s.end_date }}</div>
+        <div>👥 {{ s.max_volunteers }} Volunteers</div>
         <div><span class="status">ACTIVE</span></div>
     </div>
 
-    <a href="#" class="btn">View Details</a>
+    <button class="btn" onclick="toggleDetails({{ s.id }})">
+        View Details
+    </button>
+
+    <!-- EXPANDABLE DETAILS -->
+    <div id="details-{{ s.id }}" class="details">
+        <hr>
+        <p><strong>Description:</strong> {{ s.description }}</p>
+        <p><strong>Required Gender:</strong> {{ s.required_gender }}</p>
+        <p><strong>Required Year:</strong> {{ s.required_year }}</p>
+
+        {% if s.authorization_letter %}
+        <p>
+            <strong>Authorization Letter:</strong>
+            <a href="{{ s.authorization_letter.url }}" target="_blank" class="letter-link">
+                View Letter
+            </a>
+        </p>
+        {% endif %}
+    </div>
+
 </div>
 {% empty %}
 <p>No active works available.</p>
 {% endfor %}
-
 </div>
 </div>
 
+
+<script>
+function toggleDetails(id){
+    const box = document.getElementById("details-" + id);
+    box.classList.toggle("open");
+}
+</script>
 {% endblock %}

@@ -54,6 +54,7 @@ class VolunteerProfile(models.Model):
 class Organization(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organization_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15, blank=True, null=True)
     verification_letter = models.FileField(
         upload_to="org_letters/",
         blank=True,

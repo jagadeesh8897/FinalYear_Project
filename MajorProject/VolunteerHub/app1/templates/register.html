@@ -172,6 +172,8 @@ function updateUI() {
 
     document.getElementById("department").style.display = isVolunteer ? "block" : "none";
     document.getElementById("student_id").style.display = isVolunteer ? "block" : "none";
+    document.getElementById("gender").style.display = isVolunteer ? "block" : "none";
+document.getElementById("gender").required = isVolunteer;
 
     document.getElementById("year").required = isVolunteer;
     document.getElementById("department").required = isVolunteer;

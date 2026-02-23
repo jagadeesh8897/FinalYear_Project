@@ -261,23 +261,42 @@ def organization_dashboard_page(request):
         context
     )
 
+from datetime import date
+
 
 @login_required
 def admin_dashboard_page(request):
+
     if request.user.role != "ADMIN":
         return redirect("login")
 
+    today = date.today()
+
+    volunteers = VolunteerProfile.objects.count()
+    organizations = Organization.objects.filter(approved=True).count()
+
+    # ✅ Active = approved + not expired
+    active = Service.objects.filter(
+        status__iexact="APPROVED",
+        end_date__gte=today
+    ).count()
+
+    # ✅ Completed = expired by date
+    completed = Service.objects.filter(
+        end_date__lt=today
+    ).count()
+
     pending_org_count = Organization.objects.filter(approved=False).count()
-    pending_service_count = Service.objects.filter(status__iexact="pending").count()
+    pending_service_count = Service.objects.filter(status__iexact="PENDING").count()
 
     return render(
         request,
         "admin_panel/dashboard.html",
         {
-            "volunteers": VolunteerProfile.objects.count(),
-            "approved_org_count": Organization.objects.filter(approved=True).count(),
-            "active": Service.objects.filter(status="APPROVED").count(),
-            "completed": Service.objects.filter(status="COMPLETED").count(),
+            "volunteers": volunteers,
+            "organizations": organizations,
+            "active": active,
+            "completed": completed,
             "pending_org_count": pending_org_count,
             "pending_service_count": pending_service_count,
         }
@@ -635,12 +654,29 @@ def register_view(request):
 
     # ---------- CREATE USER ----------
     with transaction.atomic():
+    
         user = User.objects.create_user(
             username=email,
             email=email,
+            
             password=password,
             role=role
         )
+
+        if role == "VOLUNTEER":
+            VolunteerProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    "full_name": full_name,
+                    "phone": phone,
+                    "student_id": student_id,
+                    "department": department,
+                    "year": year,
+                    "skills": skills,
+                    "gender": gender, 
+                }
+            )
+
 
         if role == "VOLUNTEER":
             VolunteerProfile.objects.update_or_create(
@@ -662,17 +698,18 @@ def register_view(request):
             user.is_active = False
             user.save()
 
+            phone = request.POST.get("phone")
             letter = request.FILES.get("verification_letter")
 
             Organization.objects.update_or_create(
                 user=user,
                 defaults={
-                    "organization_name": full_name,  # ✅ org name only
+                    "organization_name": full_name,
+                    "phone": phone,  # ✅ ADD THIS
                     "verification_letter": letter,
                     "approved": False
                 }
             )
-
             messages.success(
                 request,
                 "Organization registered. Await admin approval."
@@ -685,13 +722,17 @@ def logout_view(request):
     logout(request)  # destroys session
     return redirect('login')
 
-
+from datetime import date
 @login_required
 def admin_active_works(request):
     if request.user.role != "ADMIN":
         return redirect("login")
+    today = date.today()
 
-    services = Service.objects.filter(status="APPROVED")
+    services = Service.objects.filter(
+        status="APPROVED",
+        end_date__gte=today   # 🔥 only future or today
+    )
 
     context = {
         "services": services,
@@ -706,19 +747,26 @@ def admin_active_works(request):
         context
     )
 
+from django.utils import timezone
+from datetime import date
 
 @login_required
 def admin_completed_works(request):
     if request.user.role != "ADMIN":
         return redirect("login")
 
-    services = Service.objects.filter(status="COMPLETED")
+    today = date.today()
 
-    return render(request, "admin_panel/completed_works.html", {
-        "services": services
-    })
+    services = Service.objects.filter(end_date__lt=today)
 
-
+    return render(
+        request,
+        "admin_panel/completed_works.html",
+        {
+            "services": services,
+            "completed_count": services.count()
+        }
+    )
 @login_required
 def organization_create_service(request):
     if request.user.role != "ORGANIZATION":
@@ -1178,6 +1226,8 @@ def admin_approved_organizations(request):
         return redirect("login")
 
     organizations = Organization.objects.filter(approved=True)
+    for org in organizations:
+        org.service_count = Service.objects.filter(organization=org).count()
 
     return render(
         request,
@@ -1188,6 +1238,16 @@ def admin_approved_organizations(request):
         }
     )
 
+@login_required
+def admin_organization_detail(request, org_id):
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    organization = get_object_or_404(Organization, id=org_id)
+
+    return render(request, "admin_panel/organization_detail.html", {
+        "organization": organization
+    })
 
 @require_POST
 def mark_bulk_attendance(request, service_id):
