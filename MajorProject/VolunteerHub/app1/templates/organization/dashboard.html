@@ -287,14 +287,24 @@ body{
             </div>
 
             {% if s.status == "APPROVED" %}
-            <a href="{% url 'org_view_applicants' s.id %}" class="view-link">
-                View Applicants →
-            </a>
-            {% else %}
-            <p style="color:#9ca3af;font-size:14px;">
-                Waiting for admin approval
-            </p>
-            {% endif %}
+
+    <a href="{% url 'org_view_applicants' s.id %}" class="view-link">
+        View Applicants →
+    </a>
+
+{% elif s.status == "REJECTED" %}
+
+    <p style="color:#dc2626; font-weight:600; font-size:14px;">
+        ❌ This work was rejected by Admin
+    </p>
+
+{% else %}
+
+    <p style="color:#9ca3af;font-size:14px;">
+        ⏳ Waiting for admin approval
+    </p>
+
+{% endif %}
         </div>
         {% empty %}
         <p class="empty-text">No works created yet 🚀</p>

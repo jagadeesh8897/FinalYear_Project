@@ -78,7 +78,9 @@
         {% endif %}
 
         <h3>{{ s.title }}</h3>
-        <p><strong>Organization:</strong> {{ s.organization.organization_name }}</p>
+        <p><strong>Organization:</strong> <a href="{% url 'public_org_profile' s.organization.id %}">
+    {{ s.organization.organization_name }}
+</a></p>
         <p><strong>Email:</strong> {{ s.organization.user.email }}</p>
 
 

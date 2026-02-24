@@ -127,4 +127,20 @@ path("panel/approved-organizations/", views.admin_approved_organizations, name="
 path("panel/organization/<int:org_id>/", views.admin_organization_detail, name="admin_organization_detail"),
 
 path('panel/', views.admin_dashboard_page, name='panel_home'),
+
+path(
+    "organization/<int:org_id>/",
+    views.public_organization_profile,
+    name="public_org_profile"
+),
+
+path(
+    "admin_panel/reject-service/<int:service_id>/",
+    views.reject_service,
+    name="reject_service"
+),
+
+path("forgot-password/", views.forgot_password, name="forgot_password"),
+path("verify-otp/", views.verify_otp, name="verify_otp"),
+path("reset-password/", views.reset_password, name="reset_password"),
 ]

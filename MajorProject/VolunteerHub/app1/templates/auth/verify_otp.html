@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+.left-section {
+    width: 50%;
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+}
+
+.left-section h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.left-section p {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.right-section {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f4f6f9;
+}
+
+.card {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    width: 380px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.card h2 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #1abc9c;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #16a085;
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+}
+</style>
+
+<div class="container">
+
+    <!-- LEFT SIDE -->
+    <div class="left-section">
+        <h1>Reset Your Password</h1>
+        <p>
+            Enter your registered email to receive a secure OTP.
+        </p>
+        <ul>
+            <li>✔ Secure OTP verification</li>
+            <li>✔ Fast password recovery</li>
+            <li>✔ Role-based access protection</li>
+        </ul>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right-section">
+        <div class="card">
+            <h2>Forgot Password</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="password" name="password" placeholder="New Password">
+<button>Reset Password</button>
+            </form>
+
+            <a href="{% url 'login' %}" class="back-link">Back to Login</a>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

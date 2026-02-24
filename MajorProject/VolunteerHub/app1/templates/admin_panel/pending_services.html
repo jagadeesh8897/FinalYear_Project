@@ -30,7 +30,6 @@ body{
     transition:all .3s ease;
 }
 
-/* 🔥 HOVER EFFECT */
 .service-card:hover{
     transform:translateY(-6px);
     background:#273449;
@@ -46,9 +45,14 @@ body{
 }
 
 /* ===== ORG NAME ===== */
-.org{
+.org a{
     color:#6366f1;
     font-weight:600;
+    text-decoration:none;
+}
+
+.org a:hover{
+    text-decoration:underline;
 }
 
 /* ===== META INFO ===== */
@@ -64,23 +68,49 @@ body{
     font-size:14px;
 }
 
-/* ===== BUTTON ===== */
-.btn{
-    display:block;
-    margin-top:16px;
-    padding:12px;
-    text-align:center;
-    background:#6366f1;
-    color:white;
-    border-radius:10px;
-    text-decoration:none;
+/* ===== BUTTON CONTAINER ===== */
+.action-buttons{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+}
+
+/* ===== APPROVE BUTTON ===== */
+.btn-approve{
+    padding:6px 14px;
+    border:none;
+    border-radius:20px;
+    font-size:13px;
     font-weight:600;
+    cursor:pointer;
+    background:#dcfce7;
+    color:#166534;
     transition:.25s ease;
 }
 
-.btn:hover{
-    background:#4f46e5;
-    box-shadow:0 0 15px rgba(99,102,241,.5);
+.btn-approve:hover{
+    background:#22c55e;
+    color:white;
+    transform:translateY(-2px);
+}
+
+/* ===== REJECT BUTTON ===== */
+.btn-reject{
+    padding:6px 14px;
+    border:none;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    background:#fee2e2;
+    color:#991b1b;
+    transition:.25s ease;
+}
+
+.btn-reject:hover{
+    background:#ef4444;
+    color:white;
+    transform:translateY(-2px);
 }
 
 /* ===== EMPTY STATE ===== */
@@ -91,6 +121,7 @@ body{
 }
 
 </style>
+
 <div class="page">
 
 <h1>⏳ Pending Service Requests</h1>
@@ -101,7 +132,12 @@ body{
     <div class="service-card">
 
         <div class="title">{{ s.title }}</div>
-        <div class="org">{{ s.organization.organization_name }}</div>
+
+        <div class="org">
+            <a href="{% url 'public_org_profile' s.organization.id %}">
+                {{ s.organization.organization_name }}
+            </a>
+        </div>
 
         <div class="meta">📍 {{ s.location }}</div>
         <div class="meta">👥 Required: {{ s.required_volunteers }}</div>
@@ -112,15 +148,33 @@ body{
                     View Authorization Letter
                 </a>
             {% else %}
-                <span style="color:red;">No letter uploaded</span>
+                <span style="color:#ef4444;">No letter uploaded</span>
             {% endif %}
         </div>
 
-        <a href="{% url 'admin_approve_service' s.id %}" class="btn">
-            ✅ Approve Service
-        </a>
+        <!-- ACTION BUTTONS -->
+        <div class="action-buttons">
+
+            <!-- Approve -->
+            <form method="post" action="{% url 'admin_approve_service' s.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-approve">
+                    ✔ Approve
+                </button>
+            </form>
+
+            <!-- Reject -->
+            <form method="post" action="{% url 'reject_service' s.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-reject">
+                    ✖ Reject
+                </button>
+            </form>
+
+        </div>
 
     </div>
+
 {% empty %}
     <div class="empty">
         🎉 No pending service requests

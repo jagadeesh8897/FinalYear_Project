@@ -185,7 +185,9 @@ h1{
 <div class="work-card">
 
     <div class="work-title">🌟 {{ s.title }}</div>
-    <div class="org">{{ s.organization.organization_name }}</div>
+    <div class="org"><a href="{% url 'public_org_profile' s.organization.id %}">
+    {{ s.organization.organization_name }}
+</a></div>
 
     <div class="meta">
         <div>📍 {{ s.location }}</div>

@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from django.conf import settings
 
 from app1.models import Service
 from django.contrib.auth import authenticate, login, logout
@@ -329,7 +330,18 @@ def admin_approve_service(request, service_id):
     messages.success(request, "Service approved successfully")
     return redirect("admin_pending_services")
 
+@login_required
+def reject_service(request, service_id):
 
+    if request.user.role != "ADMIN":
+        return redirect("login")
+
+    service = get_object_or_404(Service, id=service_id)
+    service.status = "REJECTED"
+    service.save()
+
+    messages.success(request, "Service rejected successfully.")
+    return redirect("admin_pending_services")
 # ==================== ADMIN MODULE ====================
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -1587,6 +1599,8 @@ def auto_select_volunteers(request, service_id):
 
     return redirect("org_view_applicants", service_id=service.id)
 
+from datetime import date
+
 @login_required
 def organization_profile(request):
 
@@ -1598,11 +1612,34 @@ def organization_profile(request):
         user=request.user
     )
 
+    today = date.today()
+
+    # 📊 Statistics
+    total_services = Service.objects.filter(
+        organization=organization
+    ).count()
+
+    active_services = Service.objects.filter(
+        organization=organization,
+        end_date__gte=today
+    ).count()
+
+    completed_services = Service.objects.filter(
+        organization=organization,
+        end_date__lt=today
+    ).count()
+
     return render(
         request,
         "organization/profile.html",
-        {"organization": organization}
+        {
+            "organization": organization,
+            "total_services": total_services,
+            "active_services": active_services,
+            "completed_services": completed_services,
+        }
     )
+import re
 
 @login_required
 def edit_organization_profile(request):
@@ -1615,8 +1652,37 @@ def edit_organization_profile(request):
         user=request.user
     )
 
+    def extract_youtube_id(url):
+        if not url:
+            return None
+
+        if re.match(r'^[a-zA-Z0-9_-]{11}$', url):
+            return url
+
+        match = re.search(r'(v=|youtu\.be/)([a-zA-Z0-9_-]{11})', url)
+        if match:
+            return match.group(2)
+
+        return None
+
     if request.method == "POST":
         organization.organization_name = request.POST.get("organization_name")
+        organization.about = request.POST.get("about")
+        organization.mission = request.POST.get("mission")
+        organization.vision = request.POST.get("vision")
+
+        organization.website = request.POST.get("website") or None
+
+        # ✅ FIXED PART
+        full_video_link = request.POST.get("promo_video")
+        organization.promo_video = extract_youtube_id(full_video_link)
+
+        if request.FILES.get("cover_image"):
+            organization.cover_image = request.FILES.get("cover_image")
+
+        if request.FILES.get("logo"):
+            organization.logo = request.FILES.get("logo")
+
         organization.save()
 
         messages.success(request, "Profile updated successfully!")
@@ -1845,3 +1911,98 @@ def organization_service_detail(request, service_id):
             "service": service
         }
     )
+
+from django.shortcuts import get_object_or_404
+from datetime import date
+
+def public_organization_profile(request, org_id):
+    organization = get_object_or_404(Organization, id=org_id)
+
+    today = date.today()
+
+    total_services = Service.objects.filter(
+        organization=organization
+    ).count()
+
+    active_services = Service.objects.filter(
+        organization=organization,
+        end_date__gte=today
+    ).count()
+
+    completed_services = Service.objects.filter(
+        organization=organization,
+        end_date__lt=today
+    ).count()
+
+    return render(request, "organization/public_profile.html", {
+        "organization": organization,
+        "total_services": total_services,
+        "active_services": active_services,
+        "completed_services": completed_services,
+    })
+
+import random
+from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+def forgot_password(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+
+            # Allow only volunteer & organization
+            if user.role not in ["VOLUNTEER", "ORGANIZATION"]:
+                messages.error(request, "Password reset not allowed for this role.")
+                return redirect("forgot_password")
+
+            otp = str(random.randint(100000, 999999))
+
+            request.session["reset_email"] = email
+            request.session["reset_otp"] = otp
+
+            send_mail(
+                "VolunteerHub Password Reset OTP",
+                f"Your OTP is {otp}",
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+
+            return redirect("verify_otp")
+
+        except User.DoesNotExist:
+            messages.error(request, "Email not registered.")
+
+    return render(request, "auth/forgot_password.html")
+
+def verify_otp(request):
+    if request.method == "POST":
+        entered_otp = request.POST.get("otp")
+
+        if entered_otp == request.session.get("reset_otp"):
+            return redirect("reset_password")
+        else:
+            messages.error(request, "Invalid OTP")
+
+    return render(request, "auth/verify_otp.html")
+
+def reset_password(request):
+    if request.method == "POST":
+        new_password = request.POST.get("password")
+        email = request.session.get("reset_email")
+
+        user = User.objects.get(email=email)
+        user.set_password(new_password)
+        user.save()
+
+        # clear session
+        request.session.flush()
+
+        messages.success(request, "Password reset successful!")
+        return redirect("login")
+
+    return render(request, "auth/reset_password.html")

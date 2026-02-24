@@ -61,6 +61,18 @@ class Organization(models.Model):
         null=True
     )
     approved = models.BooleanField(default=False)
+    cover_image = models.ImageField(upload_to="org_covers/", blank=True, null=True)
+    logo = models.ImageField(upload_to="org_logos/", blank=True, null=True)
+    tagline = models.CharField(max_length=200, blank=True)
+    about = models.TextField(blank=True)
+    mission = models.TextField(blank=True)
+    vision = models.TextField(blank=True)
+    founded_year = models.IntegerField(blank=True, null=True)
+    website = models.URLField(blank=True)
+    instagram = models.URLField(blank=True)
+    youtube = models.URLField(blank=True)
+    promo_video = models.URLField(blank=True)
+    website = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return self.organization_name
@@ -154,3 +166,7 @@ class Attendance(models.Model):
 
     class Meta:
         unique_together = ('application', 'date')
+
+class OrganizationGallery(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="org_gallery/")
