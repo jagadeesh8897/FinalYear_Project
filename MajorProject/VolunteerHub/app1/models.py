@@ -79,6 +79,11 @@ class Organization(models.Model):
         return self.organization_name
 
 
+from django.db import models
+from django.contrib.postgres.fields import JSONField  # if using PostgreSQL
+# OR for Django 3.1+
+# from django.db.models import JSONField
+
 class Service(models.Model):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
@@ -91,13 +96,18 @@ class Service(models.Model):
     location = models.CharField(max_length=100)
     start_date = models.DateField()
     end_date = models.DateField()
+    reminder_sent = models.BooleanField(default=False)
 
     max_volunteers = models.IntegerField()
+
+    # 🔥 ADD THIS FIELD
+    coordinators = models.JSONField(default=list, blank=True)
+
     GENDER_PREF = (
-    ("ANY", "Any"),
-    ("MALE", "Male"),
-    ("FEMALE", "Female"),
-)
+        ("ANY", "Any"),
+        ("MALE", "Male"),
+        ("FEMALE", "Female"),
+    )
 
     required_gender = models.CharField(
         max_length=10,
@@ -119,24 +129,24 @@ class Service(models.Model):
     organization_name = models.CharField(
         max_length=200,
         blank=True
-    )  # ✅ NEW FIELD (typed manually)
+    )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='PENDING'
     )
+
     authorization_letter = models.FileField(
         upload_to="service_letters/",
         null=True,
         blank=True
     )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
-
-
 class Application(models.Model):
     STATUS_CHOICES = [
         ("APPLIED", "Applied"),

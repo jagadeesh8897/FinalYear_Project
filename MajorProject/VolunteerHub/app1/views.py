@@ -6,7 +6,7 @@ from app1.models import Service
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -439,28 +439,6 @@ def reject_organization(request, org_id):
 # ==================== SERVICES ====================
 @require_POST
 @login_required
-def create_service(request):
-    if request.user.role != "ORGANIZATION":
-        return JsonResponse({"error": "Unauthorized"}, status=403)
-
-    org = Organization.objects.get(user=request.user)
-    data = json.loads(request.body)
-
-    service = Service.objects.create(
-        title=data["title"],
-        description=data["description"],
-        location=data["location"],
-        start_date=datetime.strptime(data["date"], "%Y-%m-%d"),
-        end_date=datetime.strptime(data["date"], "%Y-%m-%d"),
-        required_volunteers=data["required_volunteers"],
-        organization=org  # ✅ THIS IS ENOUGH
-    )
-
-    return JsonResponse({
-        "message": "Service created",
-        "service_id": service.id
-    })
-
 
 @login_required
 def list_services(request):
@@ -787,11 +765,14 @@ def admin_completed_works(request):
         }
     )
 @login_required
+@login_required
 def organization_create_service(request):
+
     if request.user.role != "ORGANIZATION":
         return redirect("login")
 
     if request.method == "POST":
+
         title = request.POST.get("title")
         description = request.POST.get("description")
         location = request.POST.get("location")
@@ -803,6 +784,25 @@ def organization_create_service(request):
 
         org = Organization.objects.get(user=request.user)
 
+        # 🔥 ADD THIS BLOCK — Collect coordinators
+        coordinators_list = []
+
+        for key in request.POST:
+            if key.startswith("coord_name_"):
+                index = key.split("_")[-1]
+
+                name = request.POST.get(f"coord_name_{index}")
+                phone = request.POST.get(f"coord_phone_{index}")
+
+                if name and phone:
+                    coordinators_list.append({
+                        "name": name.strip(),
+                        "phone": phone.strip()
+                    })
+
+        print("Coordinators received:", coordinators_list)
+
+        # 🔥 SAVE coordinators here
         Service.objects.create(
             title=title,
             description=description,
@@ -815,8 +815,8 @@ def organization_create_service(request):
             status="PENDING",
             required_gender=required_gender,
             required_year=required_year,
+            coordinators=coordinators_list   # ✅ IMPORTANT
         )
-
 
         messages.success(
             request,

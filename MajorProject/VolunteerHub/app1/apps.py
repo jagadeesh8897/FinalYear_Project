@@ -1,4 +1,7 @@
+# apps.py
+
 from django.apps import AppConfig
+import os
 
 
 class App1Config(AppConfig):
@@ -6,4 +9,6 @@ class App1Config(AppConfig):
     name = 'app1'
 
     def ready(self):
-        import app1.signals
+        if os.environ.get('RUN_MAIN') == 'true':
+            from . import scheduler
+            scheduler.start()
