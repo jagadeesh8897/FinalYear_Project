@@ -120,5 +120,27 @@
     {% endfor %}
 
 </div>
+{% if messages %}
+<div id="popup" style="
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#fee2e2;
+    color:#991b1b;
+    padding:16px 22px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+    z-index:9999;
+">
+    {% for message in messages %}
+        {{ message }}
+    {% endfor %}
+</div>
 
+<script>
+    setTimeout(() => {
+        document.getElementById("popup").style.display = "none";
+    }, 4000);
+</script>
+{% endif %}
 {% endblock %}

@@ -179,9 +179,12 @@
 
 <div id="selected_table">
 
-    <h2>Selected Volunteers</h2>
+<h2>Selected Volunteers</h2>
 
 {% if selected_apps %}
+
+<form method="post" action="{% url 'mark_bulk_attendance' service.id %}">
+{% csrf_token %}
 
 <table>
 <tr>
@@ -199,7 +202,7 @@
     <td>{{ app.volunteer.year }}</td>
     <td>{{ app.volunteer.department }}</td>
 
-    <!-- ABSENCE BUTTON (OWN FORM) -->
+    <!-- ✅ ABSENCE (NEW FEATURE KEPT) -->
     <td>
         {% if app.absence_requested and not app.absence_approved %}
             <form method="post" action="{% url 'approve_absence' app.id %}">
@@ -214,23 +217,43 @@
         {% endif %}
     </td>
 
-    <!-- ATTENDANCE CHECKBOX -->
+    <!-- ✅ OLD CLEAN BULK ATTENDANCE SYSTEM -->
     <td>
+
         {% if event_active %}
-            <form method="post" action="{% url 'mark_bulk_attendance' service.id %}">
-                {% csrf_token %}
+
+            {% if app.id in marked_ids_today %}
+
+                {% if app.id in present_ids_today %}
+                    <span style="color:green;font-weight:600;">Present</span>
+                {% else %}
+                    <span style="color:red;font-weight:600;">Absent</span>
+                {% endif %}
+
+            {% else %}
                 <input type="checkbox" name="present_ids" value="{{ app.id }}">
-                <button type="submit">Save</button>
-            </form>
+            {% endif %}
+
         {% else %}
             Event not active
         {% endif %}
+
     </td>
 
-    <!-- RATING -->
+    <!-- ✅ OLD STAR RATING SYSTEM RESTORED -->
     <td>
         {% if rating_open %}
-            ⭐ {{ app.rating|default:"-" }}
+            {% if app.rating %}
+                ⭐ {{ app.rating }}
+            {% else %}
+                <div class="star-rating" data-app-id="{{ app.id }}">
+                    <span data-value="1">★</span>
+                    <span data-value="2">★</span>
+                    <span data-value="3">★</span>
+                    <span data-value="4">★</span>
+                    <span data-value="5">★</span>
+                </div>
+            {% endif %}
         {% else %}
             Rating opens on last day
         {% endif %}
@@ -238,13 +261,22 @@
 
 </tr>
 {% endfor %}
+
 </table>
+
+{% if event_active and unmarked_exists %}
+<div class="submit-row">
+    <button type="submit">Submit Attendance</button>
+</div>
+{% endif %}
+
+</form>
 
 {% else %}
 <p>No selected volunteers</p>
 {% endif %}
-</div>
 
+</div>
 <!-- ================= APPLIED TABLE ================= -->
 
 <div id="applied_table" class="hidden">

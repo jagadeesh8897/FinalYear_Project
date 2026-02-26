@@ -16,17 +16,9 @@ urlpatterns = [
 
 
     # VOLUNTEER
-    path(
-    'volunteer/',
-    views.volunteer_dashboard_page,
-    name='volunteer_home'
-),
+    path('volunteer/',views.volunteer_dashboard_page,name='volunteer_home'),
     path('volunteer/dashboard/', views.volunteer_dashboard_page, name='volunteer_dashboard'),
-path(
-    'volunteer/services/',
-    views.volunteer_available_services,
-    name='volunteer_available_services'
-),
+    path('volunteer/services/',views.volunteer_available_services,name='volunteer_available_services'),
     path('volunteer/apply/<int:service_id>/', views.volunteer_apply_service, name='volunteer_apply_service'),
     path('volunteer/applications/', views.volunteer_applications, name='volunteer_applications'),
     path('volunteer/profile/', views.volunteer_profile, name='volunteer_profile'),
@@ -47,11 +39,7 @@ path(
     path('organization/application/<int:app_id>/rate/',views.rate_volunteer,name='rate_volunteer'),
     path("organization/profile/", views.organization_profile, name="organization_profile"),
     path("organization/profile/edit/", views.edit_organization_profile, name="edit_organization_profile"),
-path(
-    "organization/volunteer/<int:volunteer_id>/",
-    views.view_volunteer_profile,
-    name="view_volunteer_profile"
-),
+    path("organization/volunteer/<int:volunteer_id>/",views.view_volunteer_profile,name="view_volunteer_profile"),
 
 
     # ADMIN PANEL (CUSTOM)
@@ -72,75 +60,23 @@ path(
 
 
 # ADMIN ORG APPROVAL ACTIONS
-path(
-    'admin_panel/approve-org/<int:org_id>/',
-    views.approve_organization,
-    name='approve_org'
-),
-
-path(
-    'admin_panel/reject-org/<int:org_id>/',
-    views.reject_organization,
-    name='reject_org'
-),
-
-path(
-    "organization/application/<int:app_id>/promote/",
-    views.promote_waitlist,
-    name="promote_waitlist"
-),
-path(
-    "organization/application/<int:app_id>/manual-select/",
-    views.manual_select_volunteer,
-    name="manual_select_volunteer"
-),
-path(
-    "organization/application/<int:app_id>/approve/",
-    views.approve_volunteer,
-    name="approve_volunteer"
-),
-
-path(
-    "organization/application/<int:app_id>/waitlist/",
-    views.waitlist_volunteer,
-    name="waitlist_volunteer"
-),
-
-path(
-    "volunteer/application/<int:app_id>/request-absence/",
-    views.request_absence,
-    name="request_absence"
-),
-path(
-    "organization/application/<int:app_id>/approve-absence/",
-    views.approve_absence,
-    name="approve_absence"
-),
-
-path(
-    'organization/service/<int:service_id>/details/',
-    views.organization_service_detail,
-    name='organization_service_detail'
-),
-
-path("panel/approved-organizations/", views.admin_approved_organizations, name="admin_approved_organizations"),
-path("panel/organization/<int:org_id>/", views.admin_organization_detail, name="admin_organization_detail"),
-
-path('panel/', views.admin_dashboard_page, name='panel_home'),
-
-path(
-    "organization/<int:org_id>/",
-    views.public_organization_profile,
-    name="public_org_profile"
-),
-
-path(
-    "admin_panel/reject-service/<int:service_id>/",
-    views.reject_service,
-    name="reject_service"
-),
-
-path("forgot-password/", views.forgot_password, name="forgot_password"),
-path("verify-otp/", views.verify_otp, name="verify_otp"),
-path("reset-password/", views.reset_password, name="reset_password"),
+    path('admin_panel/approve-org/<int:org_id>/',views.approve_organization,name='approve_org'),
+    path('admin_panel/reject-org/<int:org_id>/',views.reject_organization,name='reject_org'),
+    path("organization/application/<int:app_id>/promote/",views.promote_waitlist,name="promote_waitlist"),
+    path("organization/application/<int:app_id>/manual-select/",views.manual_select_volunteer,name="manual_select_volunteer"),
+    path("organization/application/<int:app_id>/approve/",views.approve_volunteer,name="approve_volunteer"),
+    path("organization/application/<int:app_id>/waitlist/",views.waitlist_volunteer,name="waitlist_volunteer"),
+    path("volunteer/application/<int:app_id>/request-absence/", views.request_absence,name="request_absence"),
+    path("organization/application/<int:app_id>/approve-absence/",views.approve_absence,name="approve_absence"),
+    path('organization/service/<int:service_id>/details/',views.organization_service_detail,name='organization_service_detail'),
+    path("panel/approved-organizations/", views.admin_approved_organizations, name="admin_approved_organizations"),
+    path("panel/organization/<int:org_id>/", views.admin_organization_detail, name="admin_organization_detail"),
+    path('panel/', views.admin_dashboard_page, name='panel_home'),
+    path("organization/<int:org_id>/",views.public_organization_profile,name="public_org_profile"),
+    path("admin_panel/reject-service/<int:service_id>/",views.reject_service,name="reject_service"),
+    path("forgot-password/", views.forgot_password, name="forgot_password"),
+    path("verify-otp/", views.verify_otp, name="verify_otp"),
+    path("reset-password/", views.reset_password, name="reset_password"),
+    path("notifications/", views.get_notifications, name="get_notifications"),
+    path("notifications/read/<int:notif_id>/", views.mark_notification_read, name="mark_notification_read"),
 ]

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+from django.db import models
+from django.conf import settings
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -170,3 +171,96 @@ class Attendance(models.Model):
 class OrganizationGallery(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     image = models.ImageField(upload_to="org_gallery/")
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    link = models.CharField(max_length=255, blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Application)
+def create_status_notification(sender, instance, created, **kwargs):
+
+    # Only trigger if status changed (not on initial create)
+    if not created:
+
+        if instance.status == "SELECTED":
+            Notification.objects.create(
+                user=instance.volunteer.user,
+                title=f"You have been selected for {instance.service.title}.",
+                message=f"You have been selected for {instance.service.title}.",
+                link="/volunteer/applications/"
+            )
+
+        elif instance.status == "REJECTED":
+            Notification.objects.create(
+                user=instance.volunteer.user,
+                title="❌ Application Update",
+                message=f"Your application for {instance.service.title} was not selected.",
+                link="/volunteer/applications/"
+            )
+
+        elif instance.status == "WAITLIST":
+            Notification.objects.create(
+                user=instance.volunteer.user,
+                title="⏳ Waitlisted",
+                message=f"You have been placed on waitlist for {instance.service.title}.",
+                link="/volunteer/applications/"
+            )
+@receiver(post_save, sender=Application)
+def rating_notification(sender, instance, created, **kwargs):
+
+    if instance.rating and instance.status == "COMPLETED":
+        Notification.objects.create(
+            user=instance.volunteer.user,
+            title="⭐ You Received a Rating!",
+            message=f"You were rated {instance.rating}/5 for {instance.service.title}.",
+            link="/volunteer/attendance/"
+        )
+
+@receiver(post_save, sender=Attendance)
+def attendance_notification(sender, instance, created, **kwargs):
+
+    if created:
+        if instance.is_present:
+            msg = "You were marked Present"
+        else:
+            msg = "You were marked Absent"
+
+        Notification.objects.create(
+            user=instance.application.volunteer.user,
+            title="📅 Attendance Updated",
+            message=f"{msg} for {instance.application.service.title}.",
+            link="/volunteer/attendance/"
+        )
+
+@receiver(post_save, sender=Service)
+def service_completion_notification(sender, instance, created, **kwargs):
+
+    if instance.status == "COMPLETED":
+
+        selected_apps = Application.objects.filter(
+            service=instance,
+            status="COMPLETED"
+        )
+
+        for app in selected_apps:
+            Notification.objects.create(
+                user=app.volunteer.user,
+                title="🎓 Service Completed",
+                message=f"{instance.title} has been completed successfully.",
+                link="/volunteer/attendance/"
+            )

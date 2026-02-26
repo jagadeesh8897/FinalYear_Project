@@ -501,6 +501,13 @@ def assign_volunteers(request, service_id):
     for _, app in selected:
         app.status = "SELECTED"
         app.save()
+        # Auto withdraw other overlapping applications
+        Application.objects.filter(
+            volunteer=app.volunteer,
+            status__in=["APPLIED", "WAITLIST"],
+            service__start_date__lte=app.service.end_date,
+            service__end_date__gte=app.service.start_date
+        ).exclude(id=app.id).update(status="REJECTED")
 
     service.status = "APPROVED"
     service.save()
@@ -810,6 +817,7 @@ def organization_create_service(request):
             required_year=required_year,
         )
 
+
         messages.success(
             request,
             "Service submitted successfully. Await admin approval."
@@ -873,6 +881,13 @@ def assign_volunteers(request, service_id):
     for _, app in selected:
         app.status = "SELECTED"
         app.save()
+        # Auto withdraw other overlapping applications
+        Application.objects.filter(
+            volunteer=app.volunteer,
+            status__in=["APPLIED", "WAITLIST"],
+            service__start_date__lte=app.service.end_date,
+            service__end_date__gte=app.service.start_date
+        ).exclude(id=app.id).update(status="REJECTED")
 
     service.status = "APPROVED"  # ACTIVE
     service.save()
@@ -940,11 +955,26 @@ def volunteer_apply_service(request, service_id):
 
     profile = VolunteerProfile.objects.get(user=request.user)
 
+
     service = get_object_or_404(
         Service,
         id=service_id,
         status="APPROVED"
     )
+    # Check if volunteer already SELECTED for overlapping service
+    selected_conflict = Application.objects.filter(
+        volunteer=profile,
+        status="SELECTED",
+        service__start_date__lte=service.end_date,
+        service__end_date__gte=service.start_date
+    ).exists()
+
+    if selected_conflict:
+        messages.error(
+            request,
+            "You are already selected for another service on this date."
+        )
+        return redirect("volunteer_available_services")
 
     # Prevent duplicate apply
     if Application.objects.filter(
@@ -955,7 +985,7 @@ def volunteer_apply_service(request, service_id):
             request,
             "You have already sent a request for this service"
         )
-        return redirect("volunteer_services")
+        return redirect("volunteer_available_services")
 
     Application.objects.create(
         volunteer=profile,
@@ -968,7 +998,7 @@ def volunteer_apply_service(request, service_id):
         "Request sent for approval"
     )
 
-    return redirect("volunteer_services")
+    return redirect("volunteer_available_services")
 
 @login_required
 def organization_view_applicants(request, service_id):
@@ -1081,6 +1111,13 @@ def org_approve_volunteer(request, app_id):
 
     app.status = "SELECTED"
     app.save()
+    # Auto withdraw other overlapping applications
+    Application.objects.filter(
+        volunteer=app.volunteer,
+        status__in=["APPLIED", "WAITLIST"],
+        service__start_date__lte=app.service.end_date,
+        service__end_date__gte=app.service.start_date
+    ).exclude(id=app.id).update(status="REJECTED")
 
     return redirect(
     f"/organization/service/{app.service.id}/applications/?tab=applied"
@@ -1097,8 +1134,15 @@ def org_reject_volunteer(request, app_id):
     if app.service.organization.user != request.user:
         return redirect("organization_dashboard")
 
+
     app.status = "REJECTED"
     app.save()
+    Notification.objects.create(
+        user=app.volunteer.user,
+        title="❌ Application Update",
+        message=f"Your application was not selected.",
+        link="/volunteer/applications/"
+    )
 
     return redirect(
     f"/organization/service/{app.service.id}/applications/?tab=applied"
@@ -1130,9 +1174,19 @@ def org_select_volunteers(request, service_id):
     for app in applications:
         if str(app.id) in selected_ids:
             app.status = "SELECTED"
+            app.save()
+            # Auto withdraw other overlapping applications
+            Application.objects.filter(
+                volunteer=app.volunteer,
+                status__in=["APPLIED", "WAITLIST"],
+                service__start_date__lte=app.service.end_date,
+                service__end_date__gte=app.service.start_date
+            ).exclude(id=app.id).update(status="REJECTED")
+
         else:
             app.status = "REJECTED"
-        app.save()
+            app.save()
+
 
     # Mark service as ACTIVE (service is now running)
     service.status = "ACTIVE"
@@ -1577,9 +1631,18 @@ def auto_select_volunteers(request, service_id):
     # Select top required
     selected_ids = [app.id for app in selected_list]
 
-    Application.objects.filter(
-        id__in=selected_ids
-    ).update(status="SELECTED")
+    selected_apps = Application.objects.filter(id__in=selected_ids)
+
+    for app in selected_apps:
+        app.status = "SELECTED"
+        app.save()
+        # Auto withdraw other overlapping applications
+        Application.objects.filter(
+            volunteer=app.volunteer,
+            status__in=["APPLIED", "WAITLIST"],
+            service__start_date__lte=app.service.end_date,
+            service__end_date__gte=app.service.start_date
+        ).exclude(id=app.id).update(status="REJECTED")
 
     # Create waitlist from remaining high scores
     remaining_apps = [app for app in applications if app.id not in selected_ids]
@@ -1588,9 +1651,18 @@ def auto_select_volunteers(request, service_id):
 
     waitlist_ids = [app.id for app in remaining_apps[:waitlist_count]]
 
-    Application.objects.filter(
-        id__in=waitlist_ids
-    ).update(status="WAITLIST")
+    wait_apps = Application.objects.filter(id__in=waitlist_ids)
+
+    for app in wait_apps:
+        app.status = "WAITLIST"
+        app.save()
+
+        Notification.objects.create(
+            user=app.volunteer.user,
+            title="🤖 You Were in Waitlist!",
+            message=f"You have been in Waitlist for {service.title}.",
+            link="/volunteer/applications/"
+        )
 
     print("TOTAL APPLIED:", total_applied)
     print("FRESHERS:", fresher_count)
@@ -1761,6 +1833,12 @@ def promote_waitlist(request, app_id):
     if selected_count < service.max_volunteers:
         application.status = "SELECTED"
         application.save()
+        Notification.objects.create(
+            user=application.volunteer.user,
+            title="🎉 Promoted from Waitlist!",
+            message=f"You are now selected for {service.title}.",
+            link="/volunteer/applications/"
+        )
 
     # Redirect to Selected tab
     url = reverse("org_view_applicants", args=[service.id])
@@ -1790,6 +1868,12 @@ def manual_select_volunteer(request, app_id):
     # Select this volunteer
     application.status = "SELECTED"
     application.save()
+    Notification.objects.create(
+        user=application.volunteer.user,
+        title="🎉 Application Approved",
+        message=f"You have been selected for {service.title}.",
+        link="/volunteer/applications/"
+    )
     
 
     return redirect("org_view_applicants", service_id=service.id)
@@ -1834,6 +1918,12 @@ def approve_volunteer(request, app_id):
     if selected_count < service.max_volunteers:
         application.status = "SELECTED"
         application.save()
+        Notification.objects.create(
+            user=application.volunteer.user,
+            title="🎉 Application Approved",
+            message=f"You have been selected for {service.title}.",
+            link="/volunteer/applications/"
+        )
 
     return redirect("org_view_applicants", service_id=service.id)
 
@@ -1947,6 +2037,11 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+from django.http import JsonResponse
+import random
+from datetime import timedelta
+from django.utils import timezone
+
 def forgot_password(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -1954,55 +2049,189 @@ def forgot_password(request):
         try:
             user = User.objects.get(email=email)
 
-            # Allow only volunteer & organization
-            if user.role not in ["VOLUNTEER", "ORGANIZATION"]:
-                messages.error(request, "Password reset not allowed for this role.")
-                return redirect("forgot_password")
-
             otp = str(random.randint(100000, 999999))
 
             request.session["reset_email"] = email
             request.session["reset_otp"] = otp
+            request.session["otp_created_at"] = timezone.now().isoformat()
+            request.session["otp_verified"] = False
 
-            send_mail(
-                "VolunteerHub Password Reset OTP",
-                f"Your OTP is {otp}",
-                settings.EMAIL_HOST_USER,
-                [email],
-                fail_silently=False,
-            )
+            send_otp_email(email, otp)
 
-            return redirect("verify_otp")
+            return JsonResponse({"status": "success"})
 
         except User.DoesNotExist:
-            messages.error(request, "Email not registered.")
+            return JsonResponse({"status": "error", "message": "Email not registered"})
 
     return render(request, "auth/forgot_password.html")
 
+
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+
+def send_otp_email(user_email, otp):
+    subject = "Your Password Reset Code | VolunteerHub"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,sans-serif;">
+        <table width="100%" cellspacing="0" cellpadding="0" bgcolor="#f4f6f9">
+            <tr>
+                <td align="center">
+                    <table width="500" cellpadding="0" cellspacing="0" style="background:#ffffff;margin-top:40px;border-radius:10px;overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+
+                        <!-- Header -->
+                        <tr>
+                            <td style="background:#1abc9c;padding:20px;text-align:center;color:#ffffff;">
+                                <h2 style="margin:0;">VolunteerHub</h2>
+                            </td>
+                        </tr>
+
+                        <!-- Body -->
+                        <tr>
+                            <td style="padding:30px;color:#333;">
+                                <h3>Password Reset Request</h3>
+                                <p>Hello,</p>
+                                <p>We received a request to reset your password for your VolunteerHub account.</p>
+
+                                <p style="text-align:center;margin:30px 0;">
+                                    <span style="font-size:28px;font-weight:bold;letter-spacing:5px;background:#f4f6f9;padding:15px 25px;border-radius:8px;display:inline-block;">
+                                        {otp}
+                                    </span>
+                                </p>
+
+                                <p>This code will expire in <strong>5 minutes</strong>.</p>
+                                <p>If you did not request this, please ignore this email or contact our support team immediately.</p>
+
+                                <p style="margin-top:30px;">
+                                    Regards,<br>
+                                    <strong>VolunteerHub Security Team</strong>
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background:#f4f6f9;padding:15px;text-align:center;font-size:12px;color:#777;">
+                                © 2026 VolunteerHub. All rights reserved.
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+    text_content = strip_tags(html_content)
+
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,
+        settings.DEFAULT_FROM_EMAIL,
+        [user_email],
+    )
+    email.attach_alternative(html_content, "text/html")
+    email.send()
 def verify_otp(request):
     if request.method == "POST":
         entered_otp = request.POST.get("otp")
 
-        if entered_otp == request.session.get("reset_otp"):
-            return redirect("reset_password")
-        else:
-            messages.error(request, "Invalid OTP")
+        stored_otp = request.session.get("reset_otp")
+        otp_created_at = request.session.get("otp_created_at")
 
-    return render(request, "auth/verify_otp.html")
+        if not stored_otp:
+            return JsonResponse({"status": "error", "message": "Session expired"})
 
+        created_time = timezone.datetime.fromisoformat(otp_created_at)
+
+        if timezone.now() > created_time + timedelta(minutes=5):
+            return JsonResponse({"status": "error", "message": "OTP expired"})
+
+        if entered_otp != stored_otp:
+            return JsonResponse({"status": "error", "message": "Invalid OTP"})
+
+        request.session["otp_verified"] = True
+        return JsonResponse({"status": "success"})
+
+    return JsonResponse({"status": "error"})
 def reset_password(request):
     if request.method == "POST":
-        new_password = request.POST.get("password")
+        if not request.session.get("otp_verified"):
+            return JsonResponse({"status": "error", "message": "Unauthorized"})
+
+        password = request.POST.get("password")
         email = request.session.get("reset_email")
 
+        error = validate_password(password)
+        if error:
+            return JsonResponse({"status": "error", "message": error})
+
         user = User.objects.get(email=email)
-        user.set_password(new_password)
+        user.set_password(password)
         user.save()
 
-        # clear session
         request.session.flush()
 
-        messages.success(request, "Password reset successful!")
-        return redirect("login")
+        return JsonResponse({"status": "success"})
 
-    return render(request, "auth/reset_password.html")
+    return JsonResponse({"status": "error"})
+
+
+from django.http import JsonResponse
+from .models import Notification
+
+@login_required
+def get_notifications(request):
+    notifications = Notification.objects.filter(user=request.user)[:10]
+
+    # 🔥 Delete notifications read more than 1 day ago
+    Notification.objects.filter(
+        is_read=True,
+        read_at__lte=timezone.now() - timedelta(days=1)
+    ).delete()
+
+    notifications = Notification.objects.filter(
+        user=request.user
+    ).order_by("-created_at")
+
+    unread_count = notifications.filter(is_read=False).count()
+    data = []
+    for n in notifications:
+        data.append({
+            "id": n.id,
+            "title": n.title,
+            "message": n.message,
+            "link": n.link,
+            "is_read": n.is_read,
+            "created_at": n.created_at.strftime("%b %d, %H:%M")
+        })
+
+    unread_count = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).count()
+
+    return JsonResponse({
+        "notifications": data,
+        "unread_count": unread_count
+    })
+
+
+from django.utils import timezone
+
+@login_required
+def mark_notification_read(request, notif_id):
+
+    notif = Notification.objects.get(id=notif_id, user=request.user)
+
+    notif.is_read = True
+    notif.read_at = timezone.now()   # ✅ save read time
+    notif.save()
+
+    return JsonResponse({"status": "ok"})

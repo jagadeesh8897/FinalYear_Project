@@ -68,7 +68,14 @@
         <!-- TOP BAR -->
         <header class="topbar">
             <h2>Volunteer Dashboard</h2>
-            <div class="bell">🔔</div>
+            <div class="notification-wrapper">
+    <div class="bell" onclick="toggleNotifications()">
+        🔔
+        <span id="notifCount" class="notif-count">0</span>
+    </div>
+
+    <div id="notifDropdown" class="notif-dropdown"></div>
+</div>
         </header>
 
         <section class="content">
@@ -80,6 +87,73 @@
     </main>
 
 </div>
+<script>
+
+function toggleNotifications() {
+    const dropdown = document.getElementById("notifDropdown");
+    dropdown.style.display =
+        dropdown.style.display === "block" ? "none" : "block";
+
+    loadNotifications();
+}
+
+function loadNotifications() {
+    fetch("/notifications/")
+    .then(res => res.json())
+    .then(data => {
+
+        const dropdown = document.getElementById("notifDropdown");
+        dropdown.innerHTML = "";
+
+        document.getElementById("notifCount").innerText = data.unread_count;
+
+        if (data.notifications.length === 0) {
+            dropdown.innerHTML = "<div style='padding:15px;'>No notifications</div>";
+            return;
+        }
+
+        data.notifications.forEach(n => {
+            const item = document.createElement("div");
+            item.className = "notif-item " + (n.is_read ? "" : "unread");
+
+            item.innerHTML = `
+                <div>${n.title}</div>
+                <div>${n.message}</div>
+                <small>${n.created_at}</small>
+            `;
+
+            item.onclick = () => {
+                markAsRead(n.id);
+                if(n.link){
+                    window.location.href = n.link;
+                }
+            };
+
+            dropdown.appendChild(item);
+        });
+    });
+}
+
+function markAsRead(id) {
+    fetch(`/notifications/read/${id}/`)
+    .then(() => loadNotifications());
+}
+
+/* Close when clicking outside */
+document.addEventListener("click", function(event) {
+    const wrapper = document.querySelector(".notification-wrapper");
+
+    if (!wrapper) return;
+
+    if (!wrapper.contains(event.target)) {
+        document.getElementById("notifDropdown").style.display = "none";
+    }
+});
+    document.addEventListener("DOMContentLoaded", function() {
+    loadNotifications();
+});
+
+</script>
 
 </body>
 </html>
