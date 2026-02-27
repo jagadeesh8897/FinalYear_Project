@@ -2,10 +2,11 @@
 {% block content %}
 
 <style>
+
 body{
-    background:#0f172a;
+    background:#f5efe6;
     font-family:'Poppins', sans-serif;
-    color:#f1f5f9;
+    color:#3e2c23;
 }
 
 .public-profile{
@@ -13,7 +14,7 @@ body{
     margin:40px auto 80px;
 }
 
-/* COVER */
+/* ===== COVER ===== */
 .cover-wrapper{
     position:relative;
     margin-bottom:80px;
@@ -21,8 +22,10 @@ body{
 
 .cover{
     height:260px;
-    border-radius:12px;
+    border-radius:18px;
     overflow:hidden;
+    border:1px solid #e6dccf;
+    box-shadow:0 15px 35px rgba(111,78,55,0.12);
 }
 
 .cover img{
@@ -31,7 +34,7 @@ body{
     object-fit:cover;
 }
 
-/* LOGO */
+/* ===== LOGO ===== */
 .logo{
     position:absolute;
     bottom:-60px;
@@ -39,48 +42,68 @@ body{
     width:130px;
     height:130px;
     border-radius:50%;
-    border:6px solid #0f172a;
+    border:6px solid #f5efe6;
     background:white;
     object-fit:cover;
-    box-shadow:0 8px 25px rgba(0,0,0,.6);
+    box-shadow:0 10px 25px rgba(111,78,55,.25);
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 .org-header{
     margin-left:190px;
     margin-top:15px;
 }
 
 .org-header h1{
-    font-size:28px;
+    font-size:30px;
     font-weight:700;
     margin-bottom:6px;
+    color:#3e2c23;
 }
 
 .tagline{
-    color:#94a3b8;
+    color:#7c6a58;
     font-size:15px;
 }
 
-/* SECTION */
+/* ===== WEBSITE LINK ===== */
+.website-link{
+    margin-top:15px;
+    font-size:16px;
+}
+
+.website-link a{
+    color:#6f4e37;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.website-link a:hover{
+    color:#8b5e3c;
+}
+
+/* ===== SECTION ===== */
 .section{
     margin-top:35px;
-    background:#1e293b;
+    background:#ffffff;
     padding:30px;
-    border-radius:14px;
+    border-radius:18px;
+    border:1px solid #e6dccf;
+    box-shadow:0 12px 30px rgba(111,78,55,0.08);
 }
 
 .section h2{
     font-size:20px;
     margin-bottom:12px;
+    color:#6f4e37;
 }
 
 .section p{
-    color:#cbd5e1;
-    line-height:1.6;
+    color:#7c6a58;
+    line-height:1.7;
 }
 
-/* STATS */
+/* ===== STATS ===== */
 .stats{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -89,24 +112,25 @@ body{
 }
 
 .stat-box{
-    background:#0f172a;
+    background:#faf8f4;
     padding:30px;
-    border-radius:12px;
+    border-radius:16px;
     text-align:center;
+    border:1px solid #e6dccf;
 }
 
 .stat-box h3{
     font-size:42px;
     font-weight:700;
-    color:#38bdf8;
+    color:#6f4e37;
 }
 
 .stat-box span{
     font-size:14px;
-    color:#94a3b8;
+    color:#7c6a58;
 }
 
-/* VIDEO */
+/* ===== VIDEO ===== */
 .video-container{
     margin-top:20px;
     border-radius:12px;
@@ -119,19 +143,16 @@ body{
     border:none;
 }
 
-/* WEBSITE LINK */
-.website-link{
-    margin-top:15px;
-    font-size:16px;
+/* ===== WATCH BUTTON ===== */
+.section a[style]{
+    background:#6f4e37 !important;
+    border-radius:10px !important;
 }
-.website-link a{
-    color:#38bdf8;
-    text-decoration:none;
-    font-weight:600;
+
+.section a[style]:hover{
+    background:#8b5e3c !important;
 }
-.website-link a:hover{
-    text-decoration:underline;
-}
+
 </style>
 
 <div class="public-profile">
@@ -202,49 +223,27 @@ body{
         </div>
     </div>
 
- {% if organization.promo_video %}
+    <!-- VIDEO -->
+    {% if organization.promo_video %}
 <div class="section">
     <h2>Promo Video</h2>
 
-    <div style="position:relative; max-width:800px;">
+    <a href="https://www.youtube.com/watch?v={{ organization.promo_video }}" target="_blank">
+        <img 
+            src="https://img.youtube.com/vi/{{ organization.promo_video }}/hqdefault.jpg"
+            style="width:100%; border-radius:12px; cursor:pointer;">
+    </a>
 
-        <a href="https://www.youtube.com/watch?v={{ organization.promo_video }}"
-           target="_blank">
-
-            <img src="https://img.youtube.com/vi/{{ organization.promo_video }}/hqdefault.jpg"
-                 style="width:100%; border-radius:12px;">
-
-            <div style="
-                position:absolute;
-                top:50%;
-                left:50%;
-                transform:translate(-50%,-50%);
-                background:rgba(0,0,0,0.6);
-                width:80px;
-                height:80px;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                font-size:28px;
-                color:white;">
-                ▶
-            </div>
-
-        </a>
-    </div>
-
-    <div style="margin-top:15px;">
+    <div style="margin-top:12px;">
         <a href="https://www.youtube.com/watch?v={{ organization.promo_video }}"
            target="_blank"
-           style="
-            background:#ef4444;
-            color:white;
-            padding:10px 18px;
-            border-radius:8px;
-            text-decoration:none;
-            font-weight:600;">
-            Watch on YouTube
+           style="background:#ef4444;
+                  color:white;
+                  padding:10px 18px;
+                  border-radius:8px;
+                  text-decoration:none;
+                  font-weight:600;">
+            ▶ Watch on YouTube
         </a>
     </div>
 </div>

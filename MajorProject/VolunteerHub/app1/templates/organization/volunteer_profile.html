@@ -6,14 +6,18 @@
     max-width:900px;
     margin:40px auto;
     background:white;
-    border-radius:18px;
+    border-radius:22px;
     overflow:hidden;
-    box-shadow:0 15px 40px rgba(0,0,0,.08);
+    border:1px solid #e6dccf;
+    box-shadow:0 25px 60px rgba(111,78,55,.12);
+    font-family:'Poppins',sans-serif;
+    color:#3e2c23;
 }
 
+/* ===== COVER ===== */
 .cover{
-    height:200px;
-    background:#4f46e5;
+    height:220px;
+    background:#d8c3a5;
     position:relative;
 }
 
@@ -23,9 +27,10 @@
     object-fit:cover;
 }
 
+/* ===== AVATAR ===== */
 .avatar{
     position:absolute;
-    bottom:-50px;
+    bottom:-55px;
     left:40px;
 }
 
@@ -33,36 +38,84 @@
     width:120px;
     height:120px;
     border-radius:50%;
-    border:5px solid white;
+    border:6px solid #f5efe6;
     object-fit:cover;
+    box-shadow:0 10px 25px rgba(111,78,55,.25);
 }
 
+/* ===== BODY ===== */
 .profile-body{
-    padding:80px 40px 40px;
+    padding:85px 40px 40px;
 }
 
+.profile-body h2{
+    color:#6f4e37;
+    font-weight:700;
+}
+
+.profile-body p{
+    color:#7c6a58;
+}
+
+/* ===== STATS ===== */
 .stats{
     display:flex;
-    gap:30px;
-    margin-top:20px;
+    gap:25px;
+    margin-top:25px;
+    flex-wrap:wrap;
 }
 
 .stat{
-    background:#f3f4f6;
-    padding:15px 20px;
-    border-radius:12px;
+    background:#faf8f4;
+    padding:18px 22px;
+    border-radius:16px;
     text-align:center;
-    min-width:120px;
+    min-width:130px;
+    border:1px solid #e6dccf;
+    transition:0.3s;
 }
 
+.stat:hover{
+    background:#ffffff;
+    box-shadow:0 12px 28px rgba(111,78,55,.12);
+}
+
+.stat h3{
+    margin:0;
+    font-size:26px;
+    color:#6f4e37;
+}
+
+.stat small{
+    color:#7c6a58;
+}
+
+/* ===== SKILLS ===== */
 .skill{
     display:inline-block;
-    background:#e0e7ff;
-    color:#3730a3;
-    padding:6px 12px;
+    background:#faf8f4;
+    color:#6f4e37;
+    padding:7px 14px;
     border-radius:20px;
-    margin:5px 5px 0 0;
+    margin:6px 6px 0 0;
     font-size:13px;
+    border:1px solid #e6dccf;
+    transition:0.3s;
+}
+
+.skill:hover{
+    background:#e8dccb;
+}
+
+/* ===== BACK BUTTON ===== */
+.profile-body a[style]{
+    background:#6f4e37 !important;
+    color:white !important;
+    border-radius:10px !important;
+}
+
+.profile-body a[style]:hover{
+    background:#8b5e3c !important;
 }
 </style>
 

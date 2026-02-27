@@ -2,10 +2,11 @@
 {% block content %}
 
 <style>
+
 body{
-    background: linear-gradient(135deg,#0f172a,#1e293b);
-    font-family: 'Segoe UI', sans-serif;
-    color:#e2e8f0;
+    background:#f5efe6;
+    font-family:'Poppins', sans-serif;
+    color:#3e2c23;
 }
 
 /* ===== CONTAINER ===== */
@@ -16,10 +17,11 @@ body{
 
 /* ===== CARD ===== */
 .edit-card{
-    background:#1e293b;
+    background:#ffffff;
     padding:45px;
     border-radius:22px;
-    box-shadow:0 25px 60px rgba(0,0,0,.6);
+    border:1px solid #e6dccf;
+    box-shadow:0 25px 60px rgba(111,78,55,.12);
 }
 
 /* ===== TITLE ===== */
@@ -27,7 +29,7 @@ body{
     font-size:30px;
     font-weight:700;
     margin-bottom:30px;
-    color:#ffffff;
+    color:#b8824d;
 }
 
 /* ===== GRID ===== */
@@ -46,28 +48,29 @@ label{
     font-weight:600;
     margin-bottom:6px;
     display:block;
-    color:#cbd5e1;
+    color:#3e2c23;
 }
 
+/* ===== INPUTS ===== */
 input,
 textarea{
     width:100%;
     padding:12px;
-    border-radius:10px;
-    border:1px solid #334155;
-    background:#0f172a;
-    color:white;
+    border-radius:12px;
+    border:1px solid #e6dccf;
+    background:#faf8f4;
+    color:#3e2c23;
     transition:.3s;
 }
 
 input:focus,
 textarea:focus{
     outline:none;
-    border-color:#6366f1;
-    box-shadow:0 0 0 2px rgba(99,102,241,.3);
+    border-color:#6f4e37;
+    box-shadow:0 0 0 2px rgba(111,78,55,.15);
 }
 
-/* Image preview */
+/* ===== IMAGE PREVIEW ===== */
 .preview{
     margin-top:10px;
 }
@@ -77,26 +80,28 @@ textarea:focus{
     max-height:160px;
     object-fit:cover;
     border-radius:12px;
-    border:2px solid #334155;
+    border:2px solid #e6dccf;
 }
 
-/* Button */
+/* ===== BUTTON ===== */
 .save-btn{
-    margin-top:25px;
-    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    margin-top:30px;
+    background:#e3d8d1;
     border:none;
     padding:14px 28px;
-    border-radius:12px;
-    color:white;
+    border-radius:14px;
+    color:rgb(114, 36, 36);
     font-weight:600;
     cursor:pointer;
     transition:.3s ease;
 }
 
 .save-btn:hover{
+    background:#f3ece7;
     transform:translateY(-3px);
-    box-shadow:0 12px 30px rgba(99,102,241,.6);
+    box-shadow:0 12px 30px rgba(111,78,55,.30);
 }
+
 </style>
 
 <div class="edit-wrapper">

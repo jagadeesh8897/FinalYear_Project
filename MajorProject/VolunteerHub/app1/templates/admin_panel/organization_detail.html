@@ -3,35 +3,49 @@
 
 <style>
 body{
-    background:#f4f6fb;
+    background:#f5efe6;
     font-family:'Segoe UI',sans-serif;
+    color:#3e2c23;
 }
 
 .container{
     padding:40px;
 }
 
+/* ===== PROFILE CARD ===== */
 .profile-card{
-    background:white;
-    padding:30px;
-    border-radius:16px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.05);
+    background:#ffffff;
+    padding:35px;
+    border-radius:20px;
+    border:1px solid #e6dccf;
+    box-shadow:0 15px 35px rgba(111,78,55,0.08);
     max-width:700px;
+    transition:0.3s ease;
+}
+
+.profile-card:hover{
+    box-shadow:0 20px 45px rgba(111,78,55,0.15);
+    transform:translateY(-4px);
 }
 
 .profile-card h2{
-    margin-bottom:20px;
-    color:#111827;
+    margin-bottom:25px;
+    color:#6f4e37;
+    font-weight:700;
+    border-bottom:2px solid #e6dccf;
+    padding-bottom:10px;
 }
 
+/* ===== INFO ROWS ===== */
 .info{
-    margin-bottom:14px;
+    margin-bottom:16px;
     font-size:15px;
+    color:#7c6a58;
 }
 
 .label{
     font-weight:600;
-    color:#374151;
+    color:#3e2c23;
 }
 
 </style>

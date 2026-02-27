@@ -7,27 +7,21 @@ body{
     margin:0;
     padding:0;
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg,#0f172a,#1e293b,#0f172a);
-    background-size: 300% 300%;
-    animation: gradientMove 12s ease infinite;
-    color: #fff;
+    background:#f5efe6;
+    color:#3e2c23;
 }
 
-@keyframes gradientMove{
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
-}
-
+/* ===== CONTAINER ===== */
 .admin-container{
-    padding: 40px;
+    padding:40px;
 }
 
 .admin-title{
-    font-size: 32px;
-    font-weight: 700;
-    margin-bottom: 35px;
-    letter-spacing: .5px;
+    font-size:32px;
+    font-weight:700;
+    margin-bottom:35px;
+    letter-spacing:.5px;
+    color:#3e2c23;
 }
 
 /* ===== CARD GRID ===== */
@@ -40,46 +34,48 @@ body{
 
 /* ===== CARD STYLE ===== */
 .card{
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(18px);
-    border-radius: 20px;
-    padding: 28px;
-    transition: all .3s ease;
-    border: 1px solid rgba(255,255,255,0.15);
-    box-shadow: 0 20px 40px rgba(0,0,0,.35);
-    text-decoration: none;
-    color: #fff;
+    background:#ffffff;
+    border-radius:20px;
+    padding:28px;
+    border:1px solid #e6dccf;
+    box-shadow:0 15px 35px rgba(111,78,55,0.08);
+    text-decoration:none;
+    color:#3e2c23;
+    transition:.3s ease;
 }
 
 .card:hover{
-    transform: translateY(-6px);
-    box-shadow: 0 25px 50px rgba(0,0,0,.5);
+    transform:translateY(-6px);
+    box-shadow:0 25px 50px rgba(111,78,55,0.18);
 }
 
 .label{
-    font-size: 15px;
-    opacity:.8;
+    font-size:15px;
+    color:#7c6a58;
 }
 
 .count{
-    font-size: 40px;
-    font-weight: 800;
+    font-size:40px;
+    font-weight:800;
     margin:10px 0;
+    color:#6f4e37;
 }
 
 .sub{
-    font-size: 13px;
-    opacity:.6;
+    font-size:13px;
+    color:#a38f7b;
+}
+
+/* ===== SECTION TITLE ===== */
+.section-title{
+    margin-top:50px;
+    margin-bottom:20px;
+    font-size:22px;
+    font-weight:600;
+    color:#3e2c23;
 }
 
 /* ===== ACTION BUTTONS ===== */
-.section-title{
-    margin-top: 50px;
-    margin-bottom: 20px;
-    font-size: 22px;
-    font-weight: 600;
-}
-
 .actions{
     display:flex;
     flex-wrap:wrap;
@@ -90,29 +86,50 @@ body{
     position:relative;
     padding:16px 28px;
     border-radius:18px;
-    background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    background:#6f4e37;
     color:#fff;
     text-decoration:none;
     font-weight:600;
-    box-shadow:0 15px 35px rgba(99,102,241,.5);
+    box-shadow:0 12px 28px rgba(111,78,55,.25);
     transition:.3s ease;
 }
 
 .action-btn:hover{
-    transform: translateY(-5px);
-    box-shadow:0 25px 55px rgba(139,92,246,.7);
+    background:#8b5e3c;
+    transform:translateY(-5px);
 }
 
+/* ===== BADGE ===== */
 .badge{
     position:absolute;
     top:-10px;
     right:-10px;
-    background:#ef4444;
+    background:#a94442;
     color:white;
     font-size:12px;
     font-weight:bold;
     padding:6px 10px;
     border-radius:50%;
+}
+
+/* ===== LOGOUT BUTTON ===== */
+.logout-fixed{
+    position:fixed;
+    bottom:30px;
+    left:30px;
+    background:#6f4e37;
+    color:white;
+    padding:12px 25px;
+    border-radius:30px;
+    text-decoration:none;
+    font-weight:600;
+    box-shadow:0 10px 25px rgba(111,78,55,0.25);
+    transition:.3s;
+}
+
+.logout-fixed:hover{
+    background:#8b5e3c;
+    transform:translateY(-3px);
 }
 
 </style>
@@ -167,7 +184,9 @@ body{
         </a>
 
     </div>
-
+<a href="{% url 'logout' %}" class="logout-fixed">
+    🚪 Logout
+</a>
 </div>
 
 {% endblock %}

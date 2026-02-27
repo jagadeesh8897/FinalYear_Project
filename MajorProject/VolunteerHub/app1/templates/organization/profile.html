@@ -1,7 +1,85 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div style="max-width:700px;margin:40px auto;background:white;padding:30px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,.05);">
+<style>
+.profile-wrapper{
+    max-width:700px;
+    margin:40px auto;
+    background:#ffffff;
+    padding:35px;
+    border-radius:20px;
+    border:1px solid #e6dccf;
+    box-shadow:0 15px 35px rgba(111,78,55,0.08);
+    font-family:'Poppins',sans-serif;
+    color:#3e2c23;
+}
+
+.profile-wrapper h2{
+    margin-bottom:15px;
+    color:#6f4e37;
+}
+
+.profile-wrapper hr{
+    border:none;
+    border-top:1px solid #e6dccf;
+    margin:15px 0 25px;
+}
+
+.profile-wrapper p{
+    margin-bottom:12px;
+    color:#7c6a58;
+}
+
+.profile-wrapper strong{
+    color:#3e2c23;
+}
+
+.status-approved{
+    color:#6f4e37;
+    font-weight:600;
+}
+
+.status-pending{
+    color:#8b5e3c;
+    font-weight:600;
+}
+
+.profile-wrapper a{
+    color:#6f4e37;
+    font-weight:600;
+    text-decoration:none;
+    transition:0.3s;
+}
+
+.profile-wrapper a:hover{
+    color:#8b5e3c;
+}
+
+.edit-btn{
+    display:inline-block;
+    margin-top:15px;
+    background:#e1dcd8;
+    color:rgb(154, 48, 48);
+    padding:10px 18px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.edit-btn:hover{
+    background:#daa175;
+}
+
+.video-section img{
+    width:100%;
+    border-radius:14px;
+    margin-top:15px;
+    border:1px solid #e6dccf;
+}
+</style>
+
+<div class="profile-wrapper">
 
     <h2>Organization Profile</h2>
     <hr>
@@ -23,27 +101,23 @@
     <p>
         <strong>Status:</strong>
         {% if organization.approved %}
-            <span style="color:green;font-weight:600;">Approved</span>
+            <span class="status-approved">Approved</span>
         {% else %}
-            <span style="color:orange;font-weight:600;">Pending Approval</span>
+            <span class="status-pending">Pending Approval</span>
         {% endif %}
     </p>
 
     {% if organization.promo_video %}
-<div class="video-section">
-    <a href="https://www.youtube.com/watch?v={{ organization.promo_video }}"
-       target="_blank">
-
-        <img src="https://img.youtube.com/vi/{{ organization.promo_video }}/hqdefault.jpg"
-             style="width:100%; border-radius:12px;">
-    </a>
-</div>
-{% endif %}
-
+    <div class="video-section">
+        <a href="https://www.youtube.com/watch?v={{ organization.promo_video }}"
+           target="_blank">
+            <img src="https://img.youtube.com/vi/{{ organization.promo_video }}/hqdefault.jpg">
+        </a>
+    </div>
+    {% endif %}
 
     <br>
-    <a href="{% url 'edit_organization_profile' %}"
-       style="background:#4f46e5;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;">
+    <a href="{% url 'edit_organization_profile' %}" class="edit-btn">
         Edit Profile
     </a>
 

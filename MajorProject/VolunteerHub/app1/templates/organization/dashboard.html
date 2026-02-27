@@ -3,15 +3,26 @@
 {% block content %}
 
 <style>
+
 body{
-    background:#f4f6fb;
-    font-family:'Segoe UI',sans-serif;
+    background:#f5efe6;
+    font-family:'Poppins',sans-serif;
+    color:#3e2c23;
+}
+
+/* OUTER PAGE SPACING */
+.page-wrapper{
+    margin:25px 35px;
+    border-radius:20px;
+    overflow:hidden;
+    background:#f8f2e9;
+    box-shadow:0 20px 60px rgba(0,0,0,0.08);
 }
 
 /* ================= TOP NAV ================= */
 .top-nav{
-    background:#111827;
-    padding:15px 30px;
+    background:#6f4e37;
+    padding:18px 35px;
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -20,23 +31,24 @@ body{
 
 .nav-left h2{
     margin:0;
+    font-weight:600;
 }
 
 .nav-right a{
     color:white;
     text-decoration:none;
-    margin-left:20px;
-    font-weight:600;
+    margin-left:25px;
+    font-weight:500;
     transition:0.3s;
 }
 
 .nav-right a:hover{
-    color:#4f46e5;
+    opacity:0.8;
 }
 
 /* ================= DASHBOARD WRAPPER ================= */
 .dashboard-container{
-    padding:30px;
+    padding:40px 50px 60px 50px;
 }
 
 /* ================= HEADER ================= */
@@ -44,22 +56,27 @@ body{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:30px;
+    margin:40px 0 25px;
 }
 
+.dashboard-header h2{
+    margin:0;
+}
+
+/* CREATE BUTTON */
 .btn-primary{
-    background:#4f46e5;
+    background:#6f4e37;
     color:white;
     padding:10px 18px;
-    border-radius:8px;
+    border-radius:10px;
     text-decoration:none;
     font-weight:600;
     transition:0.3s;
 }
 
 .btn-primary:hover{
+    background:#8b5e3c;
     transform:translateY(-2px);
-    box-shadow:0 5px 15px rgba(79,70,229,0.3);
 }
 
 /* ================= STATS CARDS ================= */
@@ -71,26 +88,57 @@ body{
 }
 
 .stat-card{
-    background:white;
-    padding:20px;
-    border-radius:14px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.05);
+    background:#ffffff;
+    padding:22px;
+    border-radius:18px;
+    border:1px solid #e6dccf;
+    box-shadow:0 10px 25px rgba(111,78,55,0.08);
     transition:0.3s;
 }
 
 .stat-card:hover{
     transform:translateY(-5px);
+    box-shadow:0 18px 40px rgba(111,78,55,0.15);
 }
 
 .stat-card h3{
     margin:0;
-    font-size:26px;
-    color:#111827;
+    font-size:28px;
+    color:#6f4e37;
 }
 
 .stat-card p{
-    margin:5px 0 0;
-    color:#6b7280;
+    margin:6px 0 0;
+    color:#7c6a58;
+}
+
+/* ================= FILTER BUTTONS ================= */
+.filter-buttons{
+    display:flex;
+    gap:14px;
+    margin-bottom:30px;
+}
+
+.filter-buttons a{
+    padding:9px 20px;
+    border-radius:30px;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:600;
+    background:#ffffff;
+    color:#6f4e37;
+    border:1px solid #e6dccf;
+    transition:all 0.3s ease;
+}
+
+.filter-buttons a:hover{
+    background:#f0e6d8;
+}
+
+.active-filter{
+    background:#6f4e37 !important;
+    color:#ffffff !important;
+    border:none !important;
 }
 
 /* ================= SERVICES GRID ================= */
@@ -101,15 +149,17 @@ body{
 }
 
 .service-card{
-    background:white;
-    padding:20px;
-    border-radius:14px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    background:#ffffff;
+    padding:22px;
+    border-radius:18px;
+    border:1px solid #e6dccf;
+    box-shadow:0 12px 30px rgba(111,78,55,0.08);
     transition:0.3s;
 }
 
 .service-card:hover{
     transform:translateY(-5px);
+    box-shadow:0 20px 45px rgba(111,78,55,0.15);
 }
 
 .card-header{
@@ -119,196 +169,153 @@ body{
     margin-bottom:15px;
 }
 
+.card-header h3{
+    margin:0;
+}
+
 .status{
-    padding:5px 12px;
+    padding:6px 14px;
     border-radius:20px;
     font-size:12px;
     font-weight:600;
 }
 
 .status.approved{
-    background:#d1fae5;
-    color:#065f46;
+    background:#d8c3a5;
 }
 
 .status.pending{
-    background:#fef3c7;
-    color:#92400e;
+    background:#f0e6d8;
 }
 
 .status.rejected{
-    background:#fee2e2;
-    color:#991b1b;
+    background:#a94442;
+    color:white;
 }
 
 .view-link{
     text-decoration:none;
     font-weight:600;
-    color:#4f46e5;
-    transition:0.3s;
+    color:#6f4e37;
 }
 
 .view-link:hover{
-    color:#111827;
+    color:#8b5e3c;
 }
 
 .empty-text{
     text-align:center;
     font-size:18px;
-    color:#6b7280;
-}
-/* Filter Buttons Container */
-.filter-buttons {
-    display: flex;
-    gap: 14px;
-    margin-bottom: 30px;
+    color:#7c6a58;
 }
 
-/* Default Button */
-.filter-buttons a {
-    padding: 9px 20px;
-    border-radius: 30px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-    background: #f4f1ea;   /* light beige */
-    color: #3e3a36;        /* dark brown */
-    border: 1px solid #e5ded6;
-    transition: all 0.3s ease;
-}
-
-/* Hover Effect */
-.filter-buttons a:hover {
-    background: #d6c7b8;   /* soft brown */
-    color: #1f1f1f;
-}
-
-/* Active Selected Filter */
-.active-filter {
-    background: linear-gradient(90deg, #2c2c2c, #4b3f36);
-    color: #ffffff !important;
-    border: none;
-}
-
-.active-filter {
-    background: linear-gradient(90deg, #c8b6a6, #a78f7c);  /* brown gradient */
-    color: #1f1f1f !important;   /* black text */
-    border: none;
-}
 </style>
 
-<!-- ================= TOP NAVIGATION ================= -->
-<div class="top-nav">
-    <div class="nav-left">
-        <h2>Organization Dashboard</h2>
-    </div>
-    <div class="nav-right">
-        <a href="{% url 'organization_profile' %}">Profile</a>
-        <a href="#">Settings</a>
-        <a href="{% url 'logout' %}">Logout</a>
-    </div>
-</div>
+<div class="page-wrapper">
 
-<div class="dashboard-container">
-
-    <!-- ================= STATS SECTION ================= -->
-    <div class="stats-grid">
-
-    <div class="stat-card">
-        <h3>{{ services|length }}</h3>
-        <p>Total Works Created</p>
+    <!-- TOP NAV -->
+    <div class="top-nav">
+        <div class="nav-left">
+            <h2>Organization Dashboard</h2>
+        </div>
+        <div class="nav-right">
+            <a href="{% url 'organization_profile' %}">Profile</a>
+            
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
     </div>
 
-    <div class="stat-card">
-        <h3>{{ approved_count }}</h3>
-        <p>Approved Works</p>
-    </div>
+    <div class="dashboard-container">
 
-    <div class="stat-card">
-        <h3>{{ pending_count }}</h3>
-        <p>Pending Approval</p>
-    </div>
-
-    <div class="stat-card">
-        <h3>{{ total_selected }}</h3>
-        <p>Selected Volunteers</p>
-    </div>
-
-    <div class="stat-card">
-        <h3>{{ total_completed }}</h3>
-        <p>Completed Volunteers</p>
-    </div>
-
-</div>
-    </div>
-
-    <!-- ================= CREATE BUTTON ================= -->
-    <div class="dashboard-header">
-        <h2>Your Works</h2>
-        <a href="{% url 'create_service' %}" class="btn-primary">
-            + Create New Work
-        </a>
-    </div>
-
-    <!-- ================= SERVICES GRID ================= -->
-
-    <div class="filter-buttons">
-
-    <a href="{% url 'organization_dashboard' %}"
-       class="{% if not status_filter %}active-filter{% endif %}">
-        All Services
-    </a>
-
-    <a href="?status=active"
-       class="{% if status_filter == 'active' %}active-filter{% endif %}">
-        Active Services
-    </a>
-
-    <a href="?status=closed"
-       class="{% if status_filter == 'closed' %}active-filter{% endif %}">
-        Closed Services
-    </a>
-
-</div>
-
-    <div class="services-grid">
-        {% for s in services %}
-        <div class="service-card">
-            <div class="card-header">
-                <h3>
-    <a href="{% url 'organization_service_detail' s.id %}"
-       style="text-decoration:none; color:inherit;">
-        {{ s.title }}
-    </a>
-</h3>
-                <span class="status {{  s.dynamic_status |lower }}">
-                    {{ s.dynamic_status }}
-                </span>
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ services|length }}</h3>
+                <p>Total Works Created</p>
             </div>
 
-            {% if s.status == "APPROVED" %}
+            <div class="stat-card">
+                <h3>{{ approved_count }}</h3>
+                <p>Approved Works</p>
+            </div>
 
-    <a href="{% url 'org_view_applicants' s.id %}" class="view-link">
-        View Applicants →
-    </a>
+            <div class="stat-card">
+                <h3>{{ pending_count }}</h3>
+                <p>Pending Approval</p>
+            </div>
 
-{% elif s.status == "REJECTED" %}
+            <div class="stat-card">
+                <h3>{{ total_selected }}</h3>
+                <p>Selected Volunteers</p>
+            </div>
 
-    <p style="color:#dc2626; font-weight:600; font-size:14px;">
-        ❌ This work was rejected by Admin
-    </p>
-
-{% else %}
-
-    <p style="color:#9ca3af;font-size:14px;">
-        ⏳ Waiting for admin approval
-    </p>
-
-{% endif %}
+            <div class="stat-card">
+                <h3>{{ total_completed }}</h3>
+                <p>Completed Volunteers</p>
+            </div>
         </div>
-        {% empty %}
-        <p class="empty-text">No works created yet 🚀</p>
-        {% endfor %}
+
+        <!-- HEADER -->
+        <div class="dashboard-header">
+            <h2>Your Works</h2>
+            <a href="{% url 'create_service' %}" class="btn-primary">
+                + Create New Work
+            </a>
+        </div>
+
+        <!-- FILTER -->
+        <div class="filter-buttons">
+            <a href="{% url 'organization_dashboard' %}"
+               class="{% if not status_filter %}active-filter{% endif %}">
+                All Services
+            </a>
+
+            <a href="?status=active"
+               class="{% if status_filter == 'active' %}active-filter{% endif %}">
+                Active Services
+            </a>
+
+            <a href="?status=closed"
+               class="{% if status_filter == 'closed' %}active-filter{% endif %}">
+                Closed Services
+            </a>
+        </div>
+
+        <!-- SERVICES -->
+        <div class="services-grid">
+            {% for s in services %}
+            <div class="service-card">
+                <div class="card-header">
+                    <h3>
+                        <a href="{% url 'organization_service_detail' s.id %}"
+                           style="text-decoration:none;color:inherit;">
+                            {{ s.title }}
+                        </a>
+                    </h3>
+                    <span class="status {{ s.dynamic_status|lower }}">
+                        {{ s.dynamic_status }}
+                    </span>
+                </div>
+
+                {% if s.status == "APPROVED" %}
+                    <a href="{% url 'org_view_applicants' s.id %}" class="view-link">
+                        View Applicants →
+                    </a>
+                {% elif s.status == "REJECTED" %}
+                    <p style="color:#dc2626;font-weight:600;font-size:14px;">
+                        ❌ This work was rejected by Admin
+                    </p>
+                {% else %}
+                    <p style="color:#9ca3af;font-size:14px;">
+                        ⏳ Waiting for admin approval
+                    </p>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p class="empty-text">No works created yet 🚀</p>
+            {% endfor %}
+        </div>
+
     </div>
 
 </div>

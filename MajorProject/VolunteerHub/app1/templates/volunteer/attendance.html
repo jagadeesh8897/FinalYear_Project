@@ -1,22 +1,33 @@
 {% extends "base_volunteer.html" %}
 {% block content %}
 <style>
+
 .attendance-card{
     background:white;
-    border-radius:18px;
-    padding:25px;
-    box-shadow:0 18px 40px rgba(0,0,0,.08);
-    margin-top:20px;
+    border-radius:22px;
+    padding:30px;
+    border:1px solid #e6dccf;
+    box-shadow:0 20px 50px rgba(111,78,55,.12);
+    margin-top:25px;
+    font-family:'Poppins',sans-serif;
+    color:#3e2c23;
 }
 
+.attendance-card h2{
+    color:#6f4e37;
+    margin-bottom:20px;
+}
+
+/* ===== TABLE ===== */
 .attendance-table{
     width:100%;
     border-collapse:collapse;
     overflow:hidden;
+    border-radius:18px;
 }
 
 .attendance-table th{
-    background:linear-gradient(90deg,#4f46e5,#6366f1);
+    background:#6f4e37;
     color:white;
     padding:16px;
     text-align:left;
@@ -25,15 +36,18 @@
 
 .attendance-table td{
     padding:16px;
-    border-bottom:1px solid #e5e7eb;
+    border-bottom:1px solid #f1ebe2;
+}
+
+.attendance-table tr{
+    transition:0.25s ease;
 }
 
 .attendance-table tr:hover{
-    background:#eef2ff;
+    background:#faf8f4;
 }
 
 /* ===== BADGES ===== */
-
 .badge{
     padding:6px 14px;
     border-radius:20px;
@@ -43,32 +57,39 @@
 }
 
 .high{
-    background:#dcfce7;
-    color:#166534;
+    background:#e8dccb;
+    color:#6f4e37;
 }
 
 .medium{
-    background:#fde68a;
-    color:#92400e;
+    background:#f3e9dc;
+    color:#8b5e3c;
 }
 
 .low{
-    background:#fee2e2;
-    color:#991b1b;
+    background:#a94442;
+    color:white;
 }
 
+/* ===== PROGRESS BAR ===== */
 .progress-bar{
     width:100%;
     height:8px;
-    background:#e5e7eb;
+    background:#e6dccf;
     border-radius:10px;
     overflow:hidden;
 }
 
 .progress-fill{
     height:100%;
-    background:linear-gradient(90deg,#22c55e,#16a34a);
+    background:#6f4e37;
 }
+
+/* ===== STAR COLORS ===== */
+.attendance-table span[style*="facc15"]{
+    color:#6f4e37 !important;
+}
+
 </style>
 
 <div class="attendance-card">

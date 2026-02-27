@@ -80,7 +80,7 @@ class Organization(models.Model):
 
 
 from django.db import models
-from django.contrib.postgres.fields import JSONField  # if using PostgreSQL
+  # if using PostgreSQL
 # OR for Django 3.1+
 # from django.db.models import JSONField
 

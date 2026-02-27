@@ -3,9 +3,9 @@
 
 <style>
 body{
-    background:#0f172a;
+    background:#f5efe6;
     font-family:'Segoe UI',sans-serif;
-    color:#e2e8f0;
+    color:#3e2c23;
 }
 
 .page{
@@ -15,12 +15,12 @@ body{
 h1{
     font-size:30px;
     font-weight:700;
-    color:#f8fafc;
+    color:#3e2c23;
     margin-bottom:8px;
 }
 
 .subtitle{
-    color:#94a3b8;
+    color:#7c6a58;
     margin-bottom:30px;
 }
 
@@ -32,16 +32,17 @@ h1{
 }
 
 .card{
-    background:#1e293b;
-    border-radius:16px;
+    background:#ffffff;
+    border-radius:18px;
     padding:24px;
-    box-shadow:0 0 0 1px rgba(255,255,255,0.05);
+    border:1px solid #e6dccf;
+    box-shadow:0 8px 25px rgba(111,78,55,0.08);
 }
 
 .count{
     font-size:38px;
     font-weight:800;
-    color:#ffffff;
+    color:#6f4e37;
 }
 
 /* ===== WORK GRID ===== */
@@ -53,22 +54,39 @@ h1{
 
 /* ===== WORK CARD ===== */
 .work-card{
-    background:#1e293b;
-    border-radius:16px;
+    background:#ffffff;
+    border-radius:18px;
     padding:24px;
-    box-shadow:0 0 0 1px rgba(255,255,255,0.05);
+    border:1px solid #e6dccf;
+    box-shadow:0 8px 25px rgba(111,78,55,0.08);
+    transition:0.3s ease;
+}
+
+.work-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 18px 40px rgba(111,78,55,0.15);
 }
 
 .work-title{
     font-size:18px;
     font-weight:600;
-    color:#ffffff;
+    color:#3e2c23;
     margin-bottom:6px;
 }
 
 .org{
-    color:#94a3b8;
+    color:#7c6a58;
     margin-bottom:14px;
+}
+
+.org a{
+    color:#6f4e37;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.org a:hover{
+    color:#8b5e3c;
 }
 
 .meta{
@@ -76,7 +94,7 @@ h1{
     grid-template-columns:1fr 1fr;
     gap:10px;
     font-size:14px;
-    color:#cbd5e1;
+    color:#7c6a58;
     margin-bottom:16px;
 }
 
@@ -84,8 +102,8 @@ h1{
     display:inline-block;
     padding:6px 14px;
     border-radius:20px;
-    background:#64748b;
-    color:#ffffff;
+    background:#d8c3a5;
+    color:#3e2c23;
     font-weight:600;
     font-size:12px;
 }
@@ -93,12 +111,20 @@ h1{
 .btn{
     display:inline-block;
     padding:10px 18px;
-    background:#475569;
+    background:#6f4e37;
     color:#ffffff;
-    border-radius:8px;
+    border-radius:10px;
     text-decoration:none;
     font-weight:600;
 }
+
+/* Divider section */
+.work-card div[style]{
+    margin-top:15px !important;
+    border-top:1px solid #e6dccf !important;
+    padding-top:15px !important;
+}
+
 </style>
 
 <div class="page">

@@ -270,6 +270,8 @@ def admin_dashboard_page(request):
 
     if request.user.role != "ADMIN":
         return redirect("login")
+    section = request.GET.get("section", "dashboard")
+    
 
     today = date.today()
 

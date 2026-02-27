@@ -1,11 +1,13 @@
-/* Dashboard Layout */
+/* ================= DASHBOARD LAYOUT ================= */
 .dashboard-container {
     max-width: 1100px;
     margin: auto;
     padding: 30px;
+    font-family: 'Poppins', sans-serif;
+    color: #3e2c23;
 }
 
-/* Header */
+/* ================= HEADER ================= */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -16,45 +18,49 @@
 .dashboard-header h2 {
     font-size: 28px;
     font-weight: 600;
+    color: #6f4e37;
 }
 
-/* Primary Button */
+/* ================= PRIMARY BUTTON ================= */
 .btn-primary {
-    background: linear-gradient(135deg, #1abc9c, #16a085);
+    background: #6f4e37;
     color: #fff;
     padding: 12px 22px;
-    border-radius: 10px;
+    border-radius: 14px;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
     transition: 0.3s ease;
 }
 
 .btn-primary:hover {
+    background: #8b5e3c;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 12px 25px rgba(111,78,55,0.25);
 }
 
-/* Grid */
+/* ================= GRID ================= */
 .services-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    gap: 22px;
 }
 
-/* Card */
+/* ================= CARD ================= */
 .service-card {
     background: #ffffff;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    border-radius: 20px;
+    padding: 22px;
+    border: 1px solid #e6dccf;
+    box-shadow: 0 18px 40px rgba(111,78,55,0.08);
     transition: 0.3s ease;
 }
 
 .service-card:hover {
     transform: translateY(-6px);
+    box-shadow: 0 25px 60px rgba(111,78,55,0.18);
 }
 
-/* Card Header */
+/* ================= CARD HEADER ================= */
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -64,9 +70,10 @@
 .card-header h3 {
     font-size: 18px;
     font-weight: 600;
+    color: #3e2c23;
 }
 
-/* Status Badge */
+/* ================= STATUS BADGE ================= */
 .status {
     padding: 6px 14px;
     border-radius: 50px;
@@ -74,31 +81,34 @@
     font-weight: 600;
 }
 
+/* Approved */
 .status.approved {
-    background: #e8f8f5;
-    color: #16a085;
+    background: #e8dccb;
+    color: #6f4e37;
 }
 
+/* Active */
 .status.active {
-    background: #eef5ff;
-    color: #2563eb;
+    background: #f5efe6;
+    color: #8b5e3c;
 }
 
-/* Link */
+/* ================= LINK ================= */
 .view-link {
     display: inline-block;
     margin-top: 15px;
     text-decoration: none;
-    color: #2563eb;
-    font-weight: 500;
+    color: #6f4e37;
+    font-weight: 600;
+    transition: 0.3s ease;
 }
 
 .view-link:hover {
-    text-decoration: underline;
+    color: #8b5e3c;
 }
 
-/* Empty State */
+/* ================= EMPTY STATE ================= */
 .empty-text {
     font-size: 16px;
-    color: #777;
+    color: #7c6a58;
 }

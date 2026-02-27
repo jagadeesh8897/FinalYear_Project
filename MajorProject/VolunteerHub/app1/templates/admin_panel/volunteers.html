@@ -4,9 +4,9 @@
 <style>
 
 body{
-    background: radial-gradient(circle at top,#1e293b,#0f172a);
+    background:#f5efe6;
     font-family:'Segoe UI',sans-serif;
-    color:white;
+    color:#3e2c23;
 }
 
 .page{
@@ -18,7 +18,7 @@ h1{
     font-size:30px;
     font-weight:700;
     margin-bottom:25px;
-    color:#ffffff;
+    color:#3e2c23;
 }
 
 /* ===== CARDS GRID ===== */
@@ -31,37 +31,35 @@ h1{
 
 /* ===== CARD ===== */
 .card{
-    background:#374151;
-    border-radius:22px;
+    background:#ffffff;
+    border-radius:20px;
     padding:26px;
-    transition:all .35s ease;
+    transition:.3s ease;
     cursor:pointer;
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid #e6dccf;
+    box-shadow:0 10px 25px rgba(111,78,55,0.08);
 }
-
 
 .card:hover{
     transform:translateY(-6px);
-    background:#3f4b5f;  /* slightly brighter */
-    border:1px solid #8b5cf6;
-    box-shadow:0 0 25px rgba(139,92,246,.4);
+    box-shadow:0 20px 45px rgba(111,78,55,0.15);
+    border:1px solid #6f4e37;
 }
 
-
 .card.active{
-    border:1px solid #8b5cf6;
+    border:2px solid #6f4e37;
 }
 
 .card h3{
     font-size:14px;
-    color:#cbd5e1;
+    color:#7c6a58;
     margin-bottom:10px;
 }
 
 .count{
     font-size:40px;
     font-weight:800;
-    color:#ffffff;
+    color:#6f4e37;
 }
 
 /* ===== SORT DROPDOWN ===== */
@@ -74,24 +72,27 @@ h1{
 select{
     padding:10px 14px;
     border-radius:10px;
-    border:none;
-    background:#1e293b;
-    color:white;
+    border:1px solid #e6dccf;
+    background:#ffffff;
+    color:#3e2c23;
     font-size:14px;
     outline:none;
+    box-shadow:0 5px 15px rgba(111,78,55,0.05);
 }
 
 /* ===== TABLE ===== */
 table{
     width:100%;
     border-collapse:collapse;
-    background:#1e293b;
-    border-radius:22px;
+    background:#ffffff;
+    border-radius:20px;
     overflow:hidden;
+    border:1px solid #e6dccf;
+    box-shadow:0 12px 30px rgba(111,78,55,0.08);
 }
 
 thead{
-    background:#111827;
+    background:#6f4e37;
     color:white;
 }
 
@@ -103,22 +104,22 @@ th{
 
 td{
     padding:18px;
-    color:#e2e8f0;
+    color:#7c6a58;
 }
 
 tbody tr{
-    border-bottom:1px solid rgba(255,255,255,.05);
+    border-bottom:1px solid #e6dccf;
     transition:.2s ease;
 }
 
 tbody tr:hover{
-    background:#334155;
+    background:#f0e6d8;
 }
 
 .empty{
     text-align:center;
     padding:25px;
-    color:#94a3b8;
+    color:#7c6a58;
 }
 
 </style>

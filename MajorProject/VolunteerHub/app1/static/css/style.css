@@ -19,7 +19,7 @@ body {
 /* LEFT PANEL */
 .auth-left {
     width: 50%;
-    background: radial-gradient(circle at top left, #2dd4bf, #0f766e);
+    background: #6f4e37;
     color: white;
     padding: 60px;
     display: flex;
@@ -58,7 +58,7 @@ body {
     margin-bottom: 8px;
     font-weight: 600;
     font-size: 14px;
-    color: #334155;
+    color: #ce7044;
 }
 
 .auth-card {
@@ -92,7 +92,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    color: #475569;
+    color: #6f4e37;
     transition: all 0.25s ease;
 }
 
@@ -102,7 +102,7 @@ body {
 
 /* ACTIVE COLORS */
 .tab.volunteer.active {
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
 }
 
@@ -112,7 +112,7 @@ body {
 }
 
 .tab.admin.active {
-    background: #7c3aed;
+    background: #6f4e37;
     color: white;
 }
 
@@ -134,7 +134,7 @@ input, select {
     padding: 12px;
     margin-top: 14px;
     border-radius: 10px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #d5dfef;
     font-size: 14px;
 }
 
@@ -154,11 +154,11 @@ input, select {
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 16px;
-    color: #64748b;
+    color: #6f4e37;
 }
 
 .password-box span:hover {
-    color: #0f766e;
+    color: #6f4e37;
 }
 
 /* BUTTON */
@@ -168,7 +168,7 @@ button {
     padding: 12px;
     border-radius: 10px;
     border: none;
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
     font-size: 16px;
     cursor: pointer;
@@ -176,7 +176,7 @@ button {
 }
 
 button:hover {
-    background: #0d9488;
+    background: #6f4e37;
 }
 
 /* SWITCH TEXT */
@@ -187,7 +187,7 @@ button:hover {
 }
 
 .switch-text a {
-    color: #14b8a6;
+    color: #f09630;
     text-decoration: none;
     font-weight: 600;
 }
@@ -206,7 +206,7 @@ button:hover {
 }
 
 .skills span.active {
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
 }
 .error-message {
@@ -250,7 +250,7 @@ button:hover {
 
 /* BUTTON */
 .primary-btn {
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
     padding: 12px 18px;
     border-radius: 12px;
@@ -394,7 +394,7 @@ body {
 .logo {
     font-size: 20px;
     font-weight: 700;
-    color: #14b8a6;
+    color: #6f4e37;
 }
 
 .nav-link {
@@ -406,7 +406,7 @@ body {
 
 /* BUTTONS */
 .btn-primary {
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
     padding: 12px 22px;
     border-radius: 10px;
@@ -415,7 +415,7 @@ body {
 }
 
 .btn-primary:hover {
-    background: #0d9488;
+    background: #6f4e37;
 }
 
 .btn-secondary {
@@ -452,7 +452,7 @@ body {
 }
 
 .highlight {
-    color: #14b8a6;
+    color: #6f4e37;
 }
 
 .subtitle {
@@ -483,14 +483,14 @@ body {
 
 .stat h2 {
     font-size: 36px;
-    color: #14b8a6;
+    color: #6f4e37;
 }
 
 .stat p {
     margin-top: 6px;
     color: #475569;
     font-weight: 600;
-
+}
 /*  sidebar */
 /* SIDEBAR */
 .sidebar {
@@ -516,7 +516,7 @@ body {
 .logo-icon {
     width: 36px;
     height: 36px;
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
     border-radius: 10px;
     display: flex;
@@ -538,7 +538,7 @@ body {
 .user-avatar {
     width: 40px;
     height: 40px;
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -554,7 +554,7 @@ body {
 .user-card p {
     margin: 0;
     font-size: 13px;
-    color: #0f766e;
+    color: #6f4e37;
 }
 
 /* MENU */
@@ -579,7 +579,7 @@ body {
 
 .menu li.active a,
 .menu a:hover {
-    background: #14b8a6;
+    background: #6f4e37;
     color: white;
 }
 
@@ -599,4 +599,3 @@ body {
 .sidebar-bottom .logout {
     color: #dc2626;
 }
-
