@@ -88,6 +88,8 @@ class Service(models.Model):
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+
         ('COMPLETED', 'Completed'),
     )
 

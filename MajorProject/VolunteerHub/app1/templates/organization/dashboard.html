@@ -231,12 +231,12 @@ body{
         <div class="stats-grid">
             <div class="stat-card">
                 <h3>{{ services|length }}</h3>
-                <p>Total Works Created</p>
+                <p>Total Services Created</p>
             </div>
 
             <div class="stat-card">
                 <h3>{{ approved_count }}</h3>
-                <p>Approved Works</p>
+                <p>Approved Services</p>
             </div>
 
             <div class="stat-card">
@@ -250,8 +250,8 @@ body{
             </div>
 
             <div class="stat-card">
-                <h3>{{ total_completed }}</h3>
-                <p>Completed Volunteers</p>
+                <h3>{{ rejected_count }}</h3>
+                <p>Rejected Applications</p>
             </div>
         </div>
 
@@ -259,7 +259,7 @@ body{
         <div class="dashboard-header">
             <h2>Your Works</h2>
             <a href="{% url 'create_service' %}" class="btn-primary">
-                + Create New Work
+                + Create New Service
             </a>
         </div>
 

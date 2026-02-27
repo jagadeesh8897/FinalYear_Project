@@ -207,6 +207,7 @@ def organization_dashboard_page(request):
     org = request.user.organization
     status_filter = request.GET.get("status")
     today = timezone.now().date()
+    
 
     services = Service.objects.filter(organization=org)
     for service in services:
@@ -244,6 +245,12 @@ def organization_dashboard_page(request):
         service__organization=org,
         status="COMPLETED"
     ).count()
+    org = request.user.organization
+
+    rejected_count = Service.objects.filter(
+        organization=org,
+        status="REJECTED"
+    ).count()
 
     context = {
         "services": services,
@@ -254,6 +261,7 @@ def organization_dashboard_page(request):
         "total_completed": total_completed,
         "status_filter": status_filter,
         "today": today,
+        "rejected_count": rejected_count,
     }
 
     return render(
