@@ -182,6 +182,11 @@ body{
             🛠 Pending Service Approvals
             <span class="badge">{{ pending_service_count|default:0 }}</span>
         </a>
+        <a href="{% url 'reports_page' %}" class="btn-primary">
+    📊 Reports
+</a>
+        
+        
 
     </div>
 <a href="{% url 'logout' %}" class="logout-fixed">

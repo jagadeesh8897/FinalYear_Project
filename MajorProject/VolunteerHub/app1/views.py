@@ -1,6 +1,9 @@
 import json
 from datetime import datetime
 from django.conf import settings
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse
+
 
 from app1.models import Service
 from django.contrib.auth import authenticate, login, logout
@@ -11,7 +14,13 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count
+from django.http import HttpResponse
+import csv
+from datetime import date, timedelta
+from django.utils import timezone
 from .models import Attendance
 from .models import (
     Organization,
@@ -2245,3 +2254,386 @@ def mark_notification_read(request, notif_id):
     notif.save()
 
     return JsonResponse({"status": "ok"})
+from django.utils import timezone
+from datetime import timedelta, datetime
+from django.shortcuts import render
+from .models import Organization, Service, Application
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import timedelta, datetime
+from .models import Organization, Service, Application
+
+
+def reports_page(request):
+
+    report_type = request.GET.get("type")
+    today = timezone.now().date()
+
+    start_date = None
+    end_date = None
+
+    # -------------------------
+    # DATE FILTER LOGIC
+    # -------------------------
+
+    # DAY → Exactly 1 Day
+    if report_type == "day":
+        selected_date = request.GET.get("single_date")
+
+        if selected_date:
+            start_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+        else:
+            start_date = today
+
+        end_date = start_date
+
+
+    # WEEK → Exactly 7 Days
+    elif report_type == "week":
+        selected_date = request.GET.get("single_date")
+
+        if selected_date:
+            end_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+        else:
+            end_date = today
+
+        start_date = end_date - timedelta(days=6)
+
+
+    # YEAR → Full Year (365 / 366 auto handled)
+    elif report_type == "year":
+        selected_year = request.GET.get("year")
+
+        if selected_year:
+            year = int(selected_year)
+        else:
+            year = today.year
+
+        start_date = datetime(year, 1, 1).date()
+        end_date = datetime(year, 12, 31).date()
+
+
+    # CUSTOM → Any Range
+    elif report_type == "custom":
+        start = request.GET.get("start_date")
+        end = request.GET.get("end_date")
+
+        if start and end:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+        else:
+            start_date = today
+            end_date = today
+
+    # First Page Load
+    else:
+        return render(request, "admin_panel/reports.html", {
+            "report_data": [],
+            "type": None
+        })
+
+
+    # -------------------------
+    # FETCH DATA
+    # -------------------------
+
+    report_data = []
+
+    organizations = Organization.objects.filter(approved=True)
+
+    for org in organizations:
+
+        services = Service.objects.filter(
+            organization=org,
+            created_at__date__range=(start_date, end_date)
+        )
+
+        applications = Application.objects.filter(
+            service__in=services
+        )
+
+        report_data.append({
+            "organization_name": org.organization_name,
+
+            # SERVICES
+            "total_services": services.count(),
+            "approved_services": services.filter(status="APPROVED").count(),
+            "rejected_services": services.filter(status="REJECTED").count(),
+            "pending_services": services.filter(status="PENDING").count(),
+            "closed_services": services.filter(status="COMPLETED").count(),
+
+            # APPLICATIONS
+            "total_applications": applications.count(),
+            "selected": applications.filter(status="SELECTED").count(),
+            "rejected": applications.filter(status="REJECTED").count(),
+            "waitlist": applications.filter(status="WAITLIST").count(),
+        })
+
+
+    return render(request, "admin_panel/reports.html", {
+        "report_data": report_data,
+        "type": report_type,
+        "start_date": start_date,
+        "end_date": end_date,
+    })
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from reportlab.platypus import TableStyle
+from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta, datetime
+from .models import Organization, Service, Application
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from django.utils import timezone
+from datetime import timedelta, datetime
+from .models import Organization, Service, Application
+
+
+def download_report(request):
+
+    report_type = request.GET.get("type")
+    today = timezone.now().date()
+
+    # -------- FILTER LOGIC --------
+
+    if report_type == "day":
+        selected_date = request.GET.get("single_date")
+        start_date = datetime.strptime(selected_date, "%Y-%m-%d").date() if selected_date else today
+        end_date = start_date
+
+    elif report_type == "week":
+        selected_date = request.GET.get("single_date")
+        end_date = datetime.strptime(selected_date, "%Y-%m-%d").date() if selected_date else today
+        start_date = end_date - timedelta(days=6)
+
+    elif report_type == "year":
+        selected_year = request.GET.get("year")
+        year = int(selected_year) if selected_year else today.year
+        start_date = datetime(year, 1, 1).date()
+        end_date = datetime(year, 12, 31).date()
+
+    elif report_type == "custom":
+        start = request.GET.get("start_date")
+        end = request.GET.get("end_date")
+        if start and end:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+        else:
+            start_date = today
+            end_date = today
+    else:
+        start_date = today
+        end_date = today
+
+    # -------- CREATE EXCEL --------
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "System Report"
+
+    headers = [
+        "Organization Name",
+        "Total Services",
+        "Approved Services",
+        "Rejected Services",
+        "Completed Services",
+        "Pending Services",
+        "Total Applications",
+        "Selected Volunteers",
+        "Rejected Volunteers",
+        "Waitlist Volunteers"
+    ]
+
+    ws.append(headers)
+
+    # Bold header
+    for col in range(1, len(headers) + 1):
+        ws.cell(row=1, column=col).font = Font(bold=True)
+
+    organizations = Organization.objects.filter(approved=True)
+
+    for org in organizations:
+
+        services = Service.objects.filter(
+            organization=org,
+            created_at__date__range=(start_date, end_date)
+        )
+
+        applications = Application.objects.filter(service__in=services)
+
+        row = [
+            org.organization_name,
+            services.count(),
+            services.filter(status="APPROVED").count(),
+            services.filter(status="REJECTED").count(),
+            services.filter(status="COMPLETED").count(),
+            services.filter(status="PENDING").count(),
+            applications.count(),
+            applications.filter(status="SELECTED").count(),
+            applications.filter(status="REJECTED").count(),
+            applications.filter(status="WAITLIST").count(),
+        ]
+
+        ws.append(row)
+
+    # Auto adjust column width
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[column_letter].width = max_length + 2
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = 'attachment; filename=VolunteerHub_Report.xlsx'
+
+    wb.save(response)
+    return response
+
+def admin_reports(request):
+
+    report_type = request.GET.get("report_type")
+
+    today = timezone.now().date()
+
+    if report_type == "daily":
+        start_date = today
+        end_date = today
+
+    elif report_type == "weekly":
+        start_date = today - timedelta(days=7)
+        end_date = today
+
+    elif report_type == "yearly":
+        start_date = today.replace(month=1, day=1)
+        end_date = today
+
+    elif report_type == "custom":
+        start_date = request.GET.get("start_date")
+        end_date = request.GET.get("end_date")
+
+    # SERVICES DATA
+    services = Service.objects.filter(created_at__date__range=[start_date, end_date])
+
+    approved_services = services.filter(status="APPROVED").count()
+    rejected_services = services.filter(status="REJECTED").count()
+    pending_services = services.filter(status="PENDING").count()
+
+    # APPLICATION DATA
+    applications = Application.objects.filter(service__in=services)
+
+    selected = applications.filter(status="SELECTED").count()
+    rejected = applications.filter(status="REJECTED").count()
+    waitlist = applications.filter(status="WAITLIST").count()
+
+    context = {
+        "approved_services": approved_services,
+        "rejected_services": rejected_services,
+        "pending_services": pending_services,
+        "selected": selected,
+        "rejected": rejected,
+        "waitlist": waitlist,
+    }
+
+    return render(request, "admin_panel/reports.html", context)
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
+from openpyxl.utils import get_column_letter
+from .models import Organization, Service, Application
+
+
+def download_selected_volunteers(request, org_name):
+
+    org = Organization.objects.get(organization_name=org_name)
+
+    services = Service.objects.filter(
+        organization=org,
+        status="APPROVED"
+    )
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Selected Volunteers"
+
+    row = 1
+
+    # 🔥 Main Title (Merged & Centered)
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
+    ws.cell(row=row, column=1).value = f"{org.organization_name} - Selected Volunteers Report"
+    ws.cell(row=row, column=1).font = Font(size=14, bold=True)
+    ws.cell(row=row, column=1).alignment = Alignment(horizontal="center")
+    row += 2
+
+    for service in services:
+
+        selected_apps = Application.objects.filter(
+            service=service,
+            status="SELECTED"
+        )
+
+        if selected_apps.exists():
+
+            # 🔥 Service Heading
+            ws.cell(row=row, column=1).value = f"Service: {service.title}"
+            ws.cell(row=row, column=1).font = Font(size=12, bold=True)
+            row += 1
+
+            headers = ["Name", "Email", "Phone", "Year", "Department", "Skills"]
+
+            # Header Row
+            for col, header in enumerate(headers, start=1):
+                ws.cell(row=row, column=col).value = header
+                ws.cell(row=row, column=col).font = Font(bold=True)
+
+            row += 1
+
+            # Volunteer Data
+            for app in selected_apps:
+
+                volunteer = app.volunteer
+                user = volunteer.user
+
+                ws.cell(row=row, column=1).value = volunteer.full_name
+                ws.cell(row=row, column=2).value = user.email
+                ws.cell(row=row, column=3).value = volunteer.phone
+                ws.cell(row=row, column=4).value = volunteer.year
+                ws.cell(row=row, column=5).value = volunteer.department
+                ws.cell(row=row, column=6).value = volunteer.skills
+
+                row += 1
+
+            row += 2  # Space between services
+
+    # 🔥 Safe Auto Column Width (No MergedCell Error)
+    for col in range(1, 7):
+        max_length = 0
+        column_letter = get_column_letter(col)
+
+        for row_cells in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=col, max_col=col):
+            for cell in row_cells:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+
+        ws.column_dimensions[column_letter].width = max_length + 3
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{org.organization_name}_Selected_Volunteers.xlsx"'
+    )
+
+    wb.save(response)
+
+    return response

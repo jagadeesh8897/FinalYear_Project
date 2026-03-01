@@ -79,4 +79,12 @@ urlpatterns = [
     path("reset-password/", views.reset_password, name="reset_password"),
     path("notifications/", views.get_notifications, name="get_notifications"),
     path("notifications/read/<int:notif_id>/", views.mark_notification_read, name="mark_notification_read"),
+    path("admin_panel/reports/", views.reports_page, name="reports_page"),
+path("admin_panel/download-report/", views.download_report, name="download_report"),
+
+path(
+    "admin_panel/download-selected/<str:org_name>/",
+    views.download_selected_volunteers,
+    name="download_selected_volunteers"
+),
 ]

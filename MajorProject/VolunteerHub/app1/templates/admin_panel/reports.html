@@ -1,0 +1,270 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>System Reports</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    margin:0;
+    background:#f5efe6;
+    font-family:'Poppins',sans-serif;
+    color:#3e2c23;
+}
+
+.container{
+    width:95%;
+    max-width:1200px;
+    margin:50px auto;
+}
+
+.page-title{
+    font-size:28px;
+    font-weight:600;
+    margin-bottom:30px;
+}
+
+.report-filter{
+    background:#ffffff;
+    padding:20px 25px;
+    border-radius:20px;
+    box-shadow:0 8px 25px rgba(111,78,55,0.08);
+    margin-bottom:40px;
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+    align-items:center;
+}
+
+.report-filter select,
+.report-filter input{
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid #e6dccf;
+    background:#faf7f2;
+    font-size:14px;
+    color:#3e2c23;
+}
+
+.report-filter button{
+    padding:10px 20px;
+    border-radius:12px;
+    border:none;
+    background:#6f4e37;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.report-filter button:hover{
+    background:#8b5e3c;
+}
+
+.download-btn{
+    background:#d8c3a5;
+    color:#3e2c23;
+    padding:10px 20px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.download-btn:hover{
+    background:#c7ad8a;
+}
+
+.org-card{
+    background:#ffffff;
+    border-radius:22px;
+    padding:30px;
+    margin-bottom:35px;
+    border:1px solid #e6dccf;
+    box-shadow:0 12px 30px rgba(111,78,55,0.08);
+}
+
+.org-title{
+    font-size:20px;
+    font-weight:600;
+    margin-bottom:20px;
+}
+
+.section-title{
+    font-size:14px;
+    font-weight:600;
+    color:#7c6a58;
+    margin-bottom:12px;
+    margin-top:18px;
+}
+
+.stats-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.stat-pill{
+    background:#faf7f2;
+    padding:8px 14px;
+    border-radius:25px;
+    font-size:13px;
+    font-weight:500;
+    border:1px solid #e6dccf;
+}
+
+.stat-pill span{
+    font-weight:700;
+    margin-left:6px;
+}
+
+.empty-state{
+    background:#ffffff;
+    padding:40px;
+    border-radius:20px;
+    text-align:center;
+    border:1px solid #e6dccf;
+    box-shadow:0 8px 25px rgba(111,78,55,0.08);
+    color:#7c6a58;
+}
+
+.download-pill {
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.download-pill:hover {
+    background: #6f4e37;
+    color: white;
+}
+
+.download-pill:hover span {
+    color: white;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="page-title">📊 System Reports</div>
+
+<form method="get" class="report-filter">
+
+    <select name="type" id="reportType">
+        <option value="">Select Type</option>
+        <option value="day" {% if type == "day" %}selected{% endif %}>Day Wise</option>
+        <option value="week" {% if type == "week" %}selected{% endif %}>Weekly</option>
+        <option value="year" {% if type == "year" %}selected{% endif %}>Yearly</option>
+        <option value="custom" {% if type == "custom" %}selected{% endif %}>Custom</option>
+    </select>
+
+    <!-- Single Date -->
+    <input type="date" name="single_date" id="singleDate"
+           value="{{ request.GET.single_date }}">
+
+    <!-- Custom Range -->
+    <input type="date" name="start_date" id="startDate"
+           value="{{ request.GET.start_date }}">
+
+    <input type="date" name="end_date" id="endDate"
+           value="{{ request.GET.end_date }}">
+
+    <!-- Year -->
+    <input type="number" name="year" id="yearInput"
+           placeholder="Enter Year"
+           value="{{ request.GET.year }}"
+           min="2000" max="2100">
+
+    <button type="submit">Generate</button>
+
+    {% if report_data %}
+    <a href="{% url 'download_report' %}?type={{ request.GET.type }}&single_date={{ request.GET.single_date }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}&year={{ request.GET.year }}"
+       class="download-btn">
+       Download Report
+    </a>
+    {% endif %}
+
+</form>
+
+{% if report_data %}
+
+    {% for org in report_data %}
+    <div class="org-card">
+
+        <div class="org-title">{{ org.organization_name }}</div>
+
+        <div class="section-title">Services Overview</div>
+        <div class="stats-row">
+            <div class="stat-pill">Total Services <span>{{ org.total_services }}</span></div>
+            <div class="stat-pill">Approved Services <span>{{ org.approved_services }}</span></div>
+            <div class="stat-pill">Rejected Services <span>{{ org.rejected_services }}</span></div>
+            <div class="stat-pill">Pending Services <span>{{ org.pending_services }}</span></div>
+            <div class="stat-pill">Closed Services <span>{{ org.closed_services }}</span></div>
+        </div>
+
+        <div class="section-title">Volunteer Applications</div>
+        <div class="stats-row">
+            <div class="stat-pill">Total Applications <span>{{ org.total_applications }}</span></div>
+            <a href="{% url 'download_selected_volunteers' org.organization_name %}" 
+   class="stat-pill download-pill">
+    Selected Volunteers <span>{{ org.selected }}</span>
+</a>
+            <div class="stat-pill">Rejected Volunteers <span>{{ org.rejected }}</span></div>
+            <div class="stat-pill">Waitlist Volunteers <span>{{ org.waitlist }}</span></div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+{% else %}
+
+<div class="empty-state">
+    No report generated yet. Select filter and click Generate.
+</div>
+
+{% endif %}
+
+</div>
+
+<script>
+const typeSelect = document.getElementById("reportType");
+const singleDate = document.getElementById("singleDate");
+const startDate = document.getElementById("startDate");
+const endDate = document.getElementById("endDate");
+const yearInput = document.getElementById("yearInput");
+
+function updateFields() {
+    const type = typeSelect.value;
+
+    singleDate.style.display = "none";
+    startDate.style.display = "none";
+    endDate.style.display = "none";
+    yearInput.style.display = "none";
+
+    if (type === "day" || type === "week") {
+        singleDate.style.display = "inline-block";
+    }
+
+    if (type === "custom") {
+        startDate.style.display = "inline-block";
+        endDate.style.display = "inline-block";
+    }
+
+    if (type === "year") {
+        yearInput.style.display = "inline-block";
+    }
+}
+
+typeSelect.addEventListener("change", updateFields);
+window.onload = updateFields;
+</script>
+
+</body>
+</html>
