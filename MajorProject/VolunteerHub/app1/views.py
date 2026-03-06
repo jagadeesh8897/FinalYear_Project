@@ -2637,3 +2637,109 @@ def download_selected_volunteers(request, org_name):
     wb.save(response)
 
     return response
+
+from django.http import HttpResponse
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from .models import Application, Service
+
+
+def download_selected_pdf(request, service_id):
+
+    service = Service.objects.get(id=service_id)
+    selected_apps = Application.objects.filter(service=service, status="SELECTED")
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="selected_volunteers_{service.id}.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=A4)
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Header
+    elements.append(Paragraph(f"<b>{service.organization.organization_name}</b>", styles["Title"]))
+    elements.append(Spacer(1,10))
+    elements.append(Paragraph(f"Service: {service.title}", styles["Heading2"]))
+    elements.append(Paragraph(f"Date: {service.start_date}", styles["Normal"]))
+    elements.append(Spacer(1,20))
+
+    # Table Data
+    data = [["Name", "Year", "Roll Number", "Department","Number"]]
+
+    for app in selected_apps:
+        data.append([
+            app.volunteer.full_name,
+            app.volunteer.year,
+            app.volunteer.student_id,
+            app.volunteer.department,
+            app.volunteer.phone
+        ])
+
+    table = Table(data)
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND",(0,0),(-1,0),colors.grey),
+        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+        ("GRID",(0,0),(-1,-1),1,colors.black)
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+
+    return response
+
+import openpyxl
+from django.http import HttpResponse
+
+
+def download_selected_excel(request, service_id):
+
+    service = Service.objects.get(id=service_id)
+    selected_apps = Application.objects.filter(service=service, status="SELECTED")
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Selected Volunteers"
+
+    sheet.append(["Name", "Year", "Roll Number", "Department","Number"])
+
+    for app in selected_apps:
+        sheet.append([
+            app.volunteer.full_name,
+            app.volunteer.year,
+            app.volunteer.student_id,
+            app.volunteer.department,
+            app.volunteer.phone,
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    response["Content-Disposition"] = f'attachment; filename="selected_volunteers_{service.id}.xlsx"'
+
+    workbook.save(response)
+
+    return response
+
+from django.shortcuts import render, get_object_or_404
+from .models import VolunteerProfile
+
+
+def public_volunteer_profile(request, volunteer_id):
+
+    volunteer = get_object_or_404(VolunteerProfile, id=volunteer_id)
+
+    context = {
+        "volunteer": volunteer
+    }
+
+    return render(
+        request,
+        "volunteer/public_volunteer_profile.html",
+        context
+    )

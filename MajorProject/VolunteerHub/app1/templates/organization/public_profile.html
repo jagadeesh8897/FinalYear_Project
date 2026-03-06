@@ -1,8 +1,25 @@
-{% extends "base.html" %}
+
 {% block content %}
 
 <style>
+/* ===== BACK BUTTON ===== */
 
+.back-btn{
+    display:inline-block;
+    margin-bottom:20px;
+    background:#6f4e37;
+    color:white;
+    padding:10px 18px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.back-btn:hover{
+    background:#8b5e3c;
+}
 body{
     background:#f5efe6;
     font-family:'Poppins', sans-serif;
@@ -156,6 +173,10 @@ body{
 </style>
 
 <div class="public-profile">
+    <!-- BACK BUTTON -->
+<div onclick="goBack()" class="back-btn">
+    ← Back
+</div>
 
     <!-- COVER + LOGO -->
     <div class="cover-wrapper">
@@ -250,5 +271,9 @@ body{
 {% endif %}
 
 </div>
-
+<script>
+function goBack(){
+    window.history.back();
+}
+</script>
 {% endblock %}

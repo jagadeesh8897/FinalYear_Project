@@ -23,6 +23,11 @@ urlpatterns = [
     path('volunteer/applications/', views.volunteer_applications, name='volunteer_applications'),
     path('volunteer/profile/', views.volunteer_profile, name='volunteer_profile'),
     path("volunteer/attendance/", views.volunteer_attendance, name="volunteer_attendance"),
+path(
+    "volunteer/<int:volunteer_id>/profile/",
+    views.public_volunteer_profile,
+    name="public_volunteer_profile"
+),
 
 
     # ORGANIZATION
@@ -40,6 +45,17 @@ urlpatterns = [
     path("organization/profile/", views.organization_profile, name="organization_profile"),
     path("organization/profile/edit/", views.edit_organization_profile, name="edit_organization_profile"),
     path("organization/volunteer/<int:volunteer_id>/",views.view_volunteer_profile,name="view_volunteer_profile"),
+path(
+    "service/<int:service_id>/download-pdf/",
+    views.download_selected_pdf,
+    name="download_selected_pdf"
+),
+
+path(
+    "service/<int:service_id>/download-excel/",
+    views.download_selected_excel,
+    name="download_selected_excel"
+),
 
 
     # ADMIN PANEL (CUSTOM)

@@ -61,6 +61,21 @@ tbody tr:hover{
     background:#f0e6d8;
 }
 
+.org{
+    color:#7c6a58;
+    margin-bottom:14px;
+}
+
+.org a{
+    color:#6f4e37;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.org a:hover{
+    color:#8b5e3c;
+}
+
 /* ===== BUTTONS ===== */
 .doc-btn,
 .view-btn{
@@ -152,7 +167,9 @@ tbody tr:hover{
 {% for org in organizations %}
 <tr>
     <!-- Organization Name -->
-    <td>{{ org.organization_name }}</td>
+    <td><div class="org"><a href="{% url 'public_org_profile' org.id %}">
+    {{ org.organization_name }}
+</a></div></td>
 
     <!-- Contact Person -->
     <td>{{ org.organization_name }}</td>

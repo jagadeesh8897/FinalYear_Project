@@ -62,6 +62,21 @@ h1{
     color:#6f4e37;
 }
 
+.org{
+    color:#7c6a58;
+    margin-bottom:14px;
+}
+
+.org a{
+    color:#6f4e37;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.org a:hover{
+    color:#8b5e3c;
+}
+
 /* ===== SORT DROPDOWN ===== */
 .controls{
     display:flex;
@@ -166,7 +181,10 @@ tbody tr:hover{
 <tbody>
 {% for v in volunteers %}
 <tr data-year="{{ v.year }}" data-branch="{{ v.department }}">
-<td>{{ v.student_id }}</td>
+    <td>
+        <div class="org">
+            <a href="{% url 'public_volunteer_profile' v.id %}"> {{ v.student_id }}</a>
+        </div></td>
 <td>{{ v.full_name }}</td>
 <td>{{ v.user.email }}</td>
 <td>{% if v.year == "4th Year" %}Final Year{% else %}{{ v.year }}{% endif %}</td>
