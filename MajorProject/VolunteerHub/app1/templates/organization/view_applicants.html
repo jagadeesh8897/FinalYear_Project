@@ -424,11 +424,29 @@
     <td>{{ app.volunteer.year }}</td>
     <td>{{ app.volunteer.department }}</td>
     <td>
-        <form method="post" action="{% url 'promote_waitlist' app.id %}">
-            {% csrf_token %}
-            <button>Promote</button>
-        </form>
-    </td>
+
+{% if today > service.end_date %}
+
+<span style="color:red;font-weight:600;">
+Event has ended
+</span>
+
+{% elif event_active %}
+
+<span style="color:orange;font-weight:600;">
+Event has started
+</span>
+
+{% else %}
+
+<form method="post" action="{% url 'promote_waitlist' app.id %}">
+    {% csrf_token %}
+    <button>Promote</button>
+</form>
+
+{% endif %}
+
+</td>
 </tr>
 {% endfor %}
 </table>

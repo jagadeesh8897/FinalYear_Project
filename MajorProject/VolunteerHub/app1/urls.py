@@ -13,6 +13,8 @@ urlpatterns = [
     path('api/login/', views.login_api, name='login_api'),
     path('register/', views.register_view, name='register'),
     path('logout/', logout_view, name='logout'),
+    path("send-register-otp/", views.send_register_otp),
+    path("verify-register-otp/", views.verify_register_otp),
 
 
     # VOLUNTEER

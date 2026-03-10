@@ -74,6 +74,7 @@ def login_api(request):
         return JsonResponse({"status": "error", "message": "Invalid role"})
 
     user = authenticate(request, username=user.username, password=password)
+
     if not user:
         return JsonResponse({"status": "error", "message": "Invalid password"})
 
@@ -594,6 +595,9 @@ import re
 def register_view(request):
     if request.method != "POST":
         return render(request, "register.html")
+    if not request.session.get("email_verified") and request.method == "POST":
+        messages.error(request, "Please verify email first")
+        return redirect("register")
 
     role = request.POST.get("role")
     full_name = request.POST.get("full_name")
@@ -606,28 +610,43 @@ def register_view(request):
     skills = request.POST.get("skills", "")
     password = request.POST.get("password")
     rpassword = request.POST.get("rpassword")
+    principal_name = request.POST.get("principal_name")
 
 
     # ---------- VALIDATIONS ----------
+    # password strength validation
+    password_error = validate_password(password)
+
+    if password_error:
+        messages.error(request, password_error)
+        return render(request, "register.html", {
+            "form_data": request.POST,
+            "selected_role": role,
+            "email_verified": True
+        })
+
     if password != rpassword:
         messages.warning(request, "Passwords do not match")
         return render(request, "register.html", {
             "form_data": request.POST,
-            "selected_role": role
+            "selected_role": role,
+            "email_verified": True
         })
 
     if role == "VOLUNTEER" and not email.endswith("@srit.ac.in"):
         messages.warning(request, "Volunteer email must end with @srit.ac.in")
         return render(request, "register.html", {
             "form_data": request.POST,
-            "selected_role": role
+            "selected_role": role,
+            "email_verified": True
         })
     if role == "VOLUNTEER":
         if VolunteerProfile.objects.filter(student_id=student_id).exists():
             messages.warning(request, "Student ID already registered")
             return render(request, "register.html", {
                 "form_data": request.POST,
-                "selected_role": role
+                "selected_role": role,
+                "email_verified": True
             })
         rollno = request.POST.get("student_id").lower()
 
@@ -640,7 +659,8 @@ def register_view(request):
             )
             return render(request, "register.html", {
                 "form_data": request.POST,
-                "selected_role": role
+                "selected_role": role,
+                "email_verified": True,
             })
         email_prefix = email.split("@")[0]
 
@@ -651,21 +671,24 @@ def register_view(request):
             )
             return render(request, "register.html", {
                 "form_data": request.POST,
-                "selected_role": role
+                "selected_role": role,
+                "email_verified": True
             })
 
     if role == "ORGANIZATION" and not email.endswith("@gmail.com"):
         messages.warning(request, "Organization email must end with @gmail.com")
         return render(request, "register.html", {
             "form_data": request.POST,
-            "selected_role": role
+            "selected_role": role,
+            "email_verified": True
         })
 
     if User.objects.filter(username=email).exists():
         messages.warning(request, "Email already registered")
         return render(request, "register.html", {
             "form_data": request.POST,
-            "selected_role": role
+            "selected_role": role,
+            "email_verified": True
         })
 
     # ---------- CREATE USER ----------
@@ -722,6 +745,7 @@ def register_view(request):
                 defaults={
                     "organization_name": full_name,
                     "phone": phone,  # ✅ ADD THIS
+                    "principal_name": principal_name,
                     "verification_letter": letter,
                     "approved": False
                 }
@@ -2743,3 +2767,160 @@ def public_volunteer_profile(request, volunteer_id):
         "volunteer/public_volunteer_profile.html",
         context
     )
+def send_registration_otp_email(user_email, otp):
+
+    subject = "Verify Your Email | VolunteerHub"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;background-color:#f4f6f9;font-family:Arial,sans-serif;">
+        <table width="100%" cellspacing="0" cellpadding="0" bgcolor="#f4f6f9">
+            <tr>
+                <td align="center">
+                    <table width="500" cellpadding="0" cellspacing="0" 
+                    style="background:#ffffff;margin-top:40px;border-radius:10px;
+                    overflow:hidden;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+
+                        <tr>
+                            <td style="background:#1abc9c;padding:20px;text-align:center;color:#ffffff;">
+                                <h2 style="margin:0;">VolunteerHub</h2>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="padding:30px;color:#333;">
+                                <h3>Email Verification</h3>
+
+                                <p>Hello,</p>
+
+                                <p>Thank you for registering with <strong>VolunteerHub</strong>.
+                                Please use the OTP below to verify your email address.</p>
+
+                                <p style="text-align:center;margin:30px 0;">
+                                    <span style="font-size:28px;font-weight:bold;
+                                    letter-spacing:5px;background:#f4f6f9;
+                                    padding:15px 25px;border-radius:8px;
+                                    display:inline-block;">
+                                        {otp}
+                                    </span>
+                                </p>
+
+                                <p>This OTP will expire in <strong>5 minutes</strong>.</p>
+
+                                <p>If you did not create this account, please ignore this email.</p>
+
+                                <p style="margin-top:30px;">
+                                    Regards,<br>
+                                    <strong>VolunteerHub Team</strong>
+                                </p>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="background:#f4f6f9;padding:15px;text-align:center;font-size:12px;color:#777;">
+                                © 2026 VolunteerHub. All rights reserved.
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+    text_content = strip_tags(html_content)
+
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,
+        settings.DEFAULT_FROM_EMAIL,
+        [user_email],
+    )
+
+    email.attach_alternative(html_content, "text/html")
+    email.send()
+
+import json
+import random
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+def send_register_otp(request):
+
+    data = json.loads(request.body)
+
+    email = data.get("email")
+    role = data.get("role")
+
+    # Volunteer domain check
+    if role == "VOLUNTEER" and not email.endswith("@srit.ac.in"):
+        return JsonResponse({
+            "status":"error",
+            "message":"Volunteer email must end with @srit.ac.in"
+        })
+
+    # Organization domain check
+    if role == "ORGANIZATION" and not email.endswith("@gmail.com"):
+        return JsonResponse({
+            "status":"error",
+            "message":"Organization email must end with @gmail.com"
+        })
+
+    # Email already exists
+    if User.objects.filter(username=email).exists():
+        return JsonResponse({
+            "status":"error",
+            "message":"Email already registered"
+        })
+
+    otp = str(random.randint(100000,999999))
+
+    request.session["register_otp"] = otp
+    request.session["register_email"] = email
+    request.session["otp_created_at"] = timezone.now().isoformat()
+    send_registration_otp_email(email, otp)
+
+    return JsonResponse({
+        "status":"success"
+    })
+
+import json
+from datetime import timedelta
+
+def verify_register_otp(request):
+
+    data = json.loads(request.body)
+
+    entered_otp = data.get("otp")
+
+    stored_otp = request.session.get("register_otp")
+    created_time = request.session.get("otp_created_at")
+    if not stored_otp or not created_time:
+        return JsonResponse({
+            "status": "error",
+            "message": "Session expired. Request OTP again."
+        })
+    created_time = timezone.datetime.fromisoformat(created_time)
+
+    if timezone.now() > created_time + timedelta(minutes=5):
+        return JsonResponse({
+            "status":"error",
+            "message":"OTP expired"
+        })
+
+    if entered_otp != stored_otp:
+        return JsonResponse({
+            "status":"error",
+            "message":"Invalid OTP"
+        })
+
+    request.session["email_verified"] = True
+
+    return JsonResponse({
+        "status":"success"
+    })

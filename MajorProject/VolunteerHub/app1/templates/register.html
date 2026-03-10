@@ -5,13 +5,36 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}?v=5">
     
 </head>
+<div id="toastContainer"></div>
 <body>
 
 <div class="auth-container">
 
     <!-- LEFT PANEL -->
     <div class="auth-left">
-        <h1>Join Our Community</h1>
+        <button onclick="window.history.back()"
+style="
+position:absolute;
+top:30px;
+left:30px;
+padding:8px 16px;
+background:white;
+color:#7a5230;
+border:none;
+border-radius:30px;
+font-size:14px;
+font-weight:600;
+cursor:pointer;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+transition:all 0.25s ease;
+width:auto;
+display:inline-flex;
+align-items:center;
+gap:6px;
+">
+← Back
+</button>
+        <h1>Join Our SRIT Community</h1>
         <p>
             Create an account to start your volunteering journey or
             register your organization to connect with volunteers.
@@ -60,15 +83,42 @@
 
                 <input type="hidden" name="skills" id="skillsInput">
 
-                <!-- COMMON -->
-                <input name="full_name"
+                <!-- EMAIL -->
+<div id="emailSection">
+
+<input name="email"
+       id="email"
+       type="email"
+       value="{{ form_data.email|default:'' }}"
+       placeholder="Email address"
+       required>
+
+<button type="button" onclick="sendOTP()" id="sendOtpBtn">
+    Send OTP
+</button>
+
+</div>
+
+
+<!-- OTP BOX -->
+<div id="otpSection" style="display:none;">
+
+<input type="text"
+       id="otp"
+       placeholder="Enter OTP">
+
+<button type="button" onclick="verifyOTP()">
+    Verify OTP
+</button>
+
+</div>
+                <div id="registerFields" style="display:none;">
+                    <input name="full_name"
                        value="{{ form_data.full_name|default:'' }}"
                        placeholder="Full Name" required>
-
-                <input name="email"
-                       type="email"
-                       value="{{ form_data.email|default:'' }}"
-                       placeholder="Email address" required>
+                    <input name="principal_name" id="principal_name"
+       placeholder="Principal Name"
+       style="display:none;">
 
                 <input name="phone"
                        value="{{ form_data.phone|default:'' }}"
@@ -79,27 +129,35 @@
                        placeholder="Student ID">
 
                 <select name="department" id="department">
-                    <option value="">Select Department</option>
-                    <option value="CSE">CSE</option>
-                    <option value="ECE">ECE</option>
-                    <option value="EEE">EEE</option>
-                    <option value="MECH">MECH</option>
-                    <option value="CIVIL">CIVIL</option>
-                </select>
+<option value="">Select Department</option>
+
+<option value="CSE" {% if form_data.department == "CSE" %}selected{% endif %}>CSE</option>
+<option value="ECE" {% if form_data.department == "ECE" %}selected{% endif %}>ECE</option>
+<option value="EEE" {% if form_data.department == "EEE" %}selected{% endif %}>EEE</option>
+<option value="MECH" {% if form_data.department == "MECH" %}selected{% endif %}>MECH</option>
+<option value="CIVIL" {% if form_data.department == "CIVIL" %}selected{% endif %}>CIVIL</option>
+
+</select>
 
                 <!-- VOLUNTEER ONLY -->
                 <select name="year" id="year">
-                    <option value="">Select Year of Study</option>
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                </select>
+
+<option value="">Select Year of Study</option>
+
+<option value="1st Year" {% if form_data.year == "1st Year" %}selected{% endif %}>1st Year</option>
+<option value="2nd Year" {% if form_data.year == "2nd Year" %}selected{% endif %}>2nd Year</option>
+<option value="3rd Year" {% if form_data.year == "3rd Year" %}selected{% endif %}>3rd Year</option>
+<option value="4th Year" {% if form_data.year == "4th Year" %}selected{% endif %}>4th Year</option>
+
+</select>
                 <select name="gender" id="gender">
-    <option value="">Select Gender</option>
-    <option value="MALE">Male</option>
-    <option value="FEMALE">Female</option>
-    <option value="OTHER">Other</option>
+
+<option value="">Select Gender</option>
+
+<option value="MALE" {% if form_data.gender == "MALE" %}selected{% endif %}>Male</option>
+<option value="FEMALE" {% if form_data.gender == "FEMALE" %}selected{% endif %}>Female</option>
+<option value="OTHER" {% if form_data.gender == "OTHER" %}selected{% endif %}>Other</option>
+
 </select>
 
                 <!-- SKILLS -->
@@ -136,7 +194,8 @@
                 <input name="rpassword" type="password"
                        placeholder="Confirm password" required>
 
-                <button type="submit" id="submitBtn">Create Account</button>
+                <button type="submit" id="submitBtn" >Create Account</button>
+</div>
             </form>
 
             <p class="switch-text">
@@ -150,6 +209,13 @@
 </div>
 
 <script>
+    {% if email_verified %}
+document.getElementById("registerFields").style.display = "block"
+document.getElementById("submitBtn").style.display = "block"
+document.getElementById("email").readOnly = true
+document.getElementById("otpSection").style.display = "none"
+document.getElementById("sendOtpBtn").style.display = "none"
+{% endif %}
 let selectedRole = "{{ selected_role|default:'VOLUNTEER' }}";
 let skills = [];
 
@@ -170,6 +236,8 @@ function updateUI() {
     document.getElementById("year").style.display = isVolunteer ? "block" : "none";
     document.getElementById("skillsBox").style.display = isVolunteer ? "block" : "none";
     document.getElementById("skillsLabel").style.display = isVolunteer ? "block" : "none";
+    document.getElementById("principal_name").style.display =
+    selectedRole === "ORGANIZATION" ? "block" : "none";
 
     document.getElementById("department").style.display = isVolunteer ? "block" : "none";
     document.getElementById("student_id").style.display = isVolunteer ? "block" : "none";
@@ -222,6 +290,128 @@ function togglePassword() {
 document.getElementById("registerForm").onsubmit = function () {
     document.getElementById("skillsInput").value = skills.join(",");
 };
+
+function sendOTP() {
+
+    let email = document.getElementById("email").value.trim()
+    let role = document.getElementById("role").value
+
+    if(!email){
+        showToast("Please enter email","error")
+        return
+    }
+
+    // Volunteer domain check
+    if(role === "VOLUNTEER" && !email.endsWith("@srit.ac.in")){
+        showToast("Volunteer email must end with @srit.ac.in","error")
+        return
+    }
+
+    // Organization domain check
+    if(role === "ORGANIZATION" && !email.endsWith("@gmail.com")){
+        showToast("Organization email must end with @gmail.com","error")
+        return
+    }
+
+    fetch("/send-register-otp/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "X-CSRFToken":"{{ csrf_token }}"
+        },
+        body:JSON.stringify({
+            email:email,
+            role:role
+        })
+    })
+    .then(res=>res.json())
+    .then(data=>{
+
+        if(data.status==="success"){
+
+            showToast("OTP sent to your email","success")
+
+            document.getElementById("otpSection").style.display="block"
+
+            document.getElementById("sendOtpBtn").style.display="none"
+
+        }else{
+
+            showToast(data.message,"error")
+
+        }
+
+    })
+}
+
+
+function verifyOTP() {
+
+    let otp = document.getElementById("otp").value;
+
+    fetch("/verify-register-otp/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            otp: otp
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.status === "success"){
+
+            showToast("Email verified successfully","success")
+
+            // 🔹 show form
+            document.getElementById("registerFields").style.display="block"
+
+            // 🔹 enable submit
+            document.getElementById("submitBtn").disabled=false
+
+            // 🔹 hide verify button
+            document.querySelector("#otpSection button").style.display="none"
+
+            // 🔹 lock email
+            document.getElementById("email").readOnly=true
+
+            // 🔹 hide otp input
+            document.getElementById("otp").style.display="none"
+
+        }
+
+        else{
+
+            showToast(data.message,"error")
+
+        }
+
+    })
+}
+function goBack(){
+    window.history.back();
+}
+
+    function showToast(message, type="success"){
+
+    const container = document.getElementById("toastContainer")
+
+    const toast = document.createElement("div")
+
+    toast.className = "toast " + type
+
+    toast.innerText = message
+
+    container.appendChild(toast)
+
+    setTimeout(()=>{
+        toast.remove()
+    },3000)
+
+}
 </script>
 
 </body>

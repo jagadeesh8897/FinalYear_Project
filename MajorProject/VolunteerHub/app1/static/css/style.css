@@ -9,7 +9,41 @@ body {
     height: 100vh;
     background: #f5f7fb;
 }
+#toastContainer{
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
 
+.toast{
+    min-width: 250px;
+    margin-bottom: 10px;
+    padding: 14px 18px;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    animation: slideIn 0.4s ease;
+}
+
+.toast.success{
+    background: #16a34a;
+}
+
+.toast.error{
+    background: #dc2626;
+}
+
+@keyframes slideIn{
+    from{
+        transform: translateX(100%);
+        opacity:0;
+    }
+    to{
+        transform: translateX(0);
+        opacity:1;
+    }
+}
 /* MAIN CONTAINER */
 .auth-container {
     display: flex;
@@ -42,7 +76,41 @@ body {
     font-size: 16px;
     line-height: 1.8;
 }
+.back-btn{
+    position:absolute;
+    top:30px;
+    left:30px;
 
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    padding:8px 14px;
+
+    background:white;
+    color:#7a5230;
+
+    border:none;
+    border-radius:25px;
+
+    font-size:14px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+
+    transition:all 0.25s ease;
+}
+
+.back-btn:hover{
+    transform:translateX(-4px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+}
+
+.back-btn .arrow{
+    font-size:16px;
+}
 /* RIGHT PANEL */
 .auth-right {
     width: 50%;

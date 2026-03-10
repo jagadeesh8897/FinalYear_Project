@@ -12,6 +12,29 @@
 
     <!-- LEFT PANEL -->
     <div class="auth-left">
+        <button onclick="window.history.back()"
+style="
+position:absolute;
+top:30px;
+left:30px;
+padding:8px 16px;
+background:white;
+color:#7a5230;
+border:none;
+border-radius:30px;
+font-size:14px;
+font-weight:600;
+cursor:pointer;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+transition:all 0.25s ease;
+width:auto;
+display:inline-flex;
+align-items:center;
+gap:6px;
+">
+← Back
+</button>
+
         <h1>Welcome Back!</h1>
         <p>
             Sign in to access your dashboard and continue making
@@ -108,6 +131,10 @@ document.getElementById("username").addEventListener("input", function () {
     } 
     else if (email.endsWith("@gmail.com")) {
         setRole("ORGANIZATION");
+    }
+    else{
+    setRole("ADMIN");
+
     }
 });
 
