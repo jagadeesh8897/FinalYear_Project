@@ -126,7 +126,8 @@ def volunteer_dashboard_page(request):
 
     completed = Application.objects.filter(
         volunteer=profile,
-        status="COMPLETED"
+        status="SELECTED",
+        service__end_date__lt=today
     ).count()
 
 
@@ -145,7 +146,7 @@ def volunteer_dashboard_page(request):
 
         if service.start_date and service.end_date:
 
-            # Count only days up to today (not future days)
+
             effective_end = min(service.end_date, today)
 
             if effective_end >= service.start_date:
