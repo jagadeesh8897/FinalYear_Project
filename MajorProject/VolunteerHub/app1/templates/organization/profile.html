@@ -2,7 +2,6 @@
 {% block content %}
 
 <style>
-
 body{
     background:#f5efe6;
     font-family:'Poppins',sans-serif;
@@ -14,9 +13,10 @@ body{
     margin:40px auto;
     background:white;
     border-radius:20px;
-    overflow:hidden;
+    overflow:visible;   /* changed from hidden */
     border:1px solid #e6dccf;
     box-shadow:0 20px 50px rgba(111,78,55,0.08);
+    position:relative;
 }
 
 /* COVER */
@@ -24,6 +24,8 @@ body{
     height:220px;
     background:#d8c4a8;
     position:relative;
+    border-radius:12px 12px 0 0;
+    overflow:hidden;
 }
 
 .cover img{
@@ -32,33 +34,47 @@ body{
     object-fit:cover;
 }
 
+/* pencil */
+
+
 /* LOGO */
 .logo{
     position:absolute;
-    bottom:-50px;
     left:40px;
-    width:110px;
-    height:110px;
+    top:160px;
+    width:120px;
+    height:120px;
     border-radius:50%;
     border:6px solid white;
     background:#eee;
+    overflow:hidden;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    z-index:10;
+}
+
+.logo img{
+    width:100%;
+    height:100%;
+    border-radius:50%;
     object-fit:cover;
 }
 
+/* camera */
+
 /* HEADER */
 .header{
-    padding:70px 40px 20px 40px;
+    padding:75px 40px 25px 40px;
 }
 
 .org-name{
-    font-size:30px;
+    font-size:28px;
     font-weight:700;
     color:#3e2c23;
 }
 
 .tagline{
     color:#7c6a58;
-    margin-top:6px;
+    margin-top:4px;
 }
 
 /* STATUS */
@@ -126,7 +142,6 @@ body{
     border-radius:14px;
     margin-top:10px;
 }
-
 </style>
 
 <div class="profile-card">
@@ -138,9 +153,26 @@ body{
             <img src="{{ organization.cover_image.url }}">
         {% endif %}
 
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="coverInput" class="cover-edit"></label>
+            <input type="file" name="cover_image" id="coverInput" hidden onchange="this.form.submit()">
+        </form>
+
+    </div>
+
+    <!-- LOGO -->
+    <div class="logo">
+
         {% if organization.logo %}
-            <img src="{{ organization.logo.url }}" class="logo">
+            <img src="{{ organization.logo.url }}">
         {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="logoInput" class="logo-edit"></label>
+            <input type="file" name="logo" id="logoInput" hidden onchange="this.form.submit()">
+        </form>
 
     </div>
 
@@ -186,7 +218,6 @@ body{
 
     </div>
 
-    <!-- ABOUT -->
     {% if organization.about %}
     <div class="section">
         <h3>About</h3>
@@ -194,7 +225,6 @@ body{
     </div>
     {% endif %}
 
-    <!-- MISSION -->
     {% if organization.mission %}
     <div class="section">
         <h3>Mission</h3>
@@ -202,7 +232,6 @@ body{
     </div>
     {% endif %}
 
-    <!-- VISION -->
     {% if organization.vision %}
     <div class="section">
         <h3>Vision</h3>
@@ -210,7 +239,6 @@ body{
     </div>
     {% endif %}
 
-    <!-- SOCIAL LINKS -->
     <div class="section socials">
 
         {% if organization.website %}
@@ -227,7 +255,6 @@ body{
 
     </div>
 
-    <!-- VIDEO -->
     {% if organization.promo_video %}
     <div class="section video">
 

@@ -104,40 +104,45 @@
                     <p>📅 {{ s.service.start_date }}</p>
                     <p>📅 {{ s.service.end_date }}</p>
 
-                    <!-- ABSENCE SECTION -->
+                    <!-- ABSENCE LOGIC -->
                     {% if s.status == "SELECTED" %}
 
-                        {% if not s.absence_requested %}
-                            <form method="post" action="{% url 'request_absence' s.id %}">
-                                {% csrf_token %}
-                                <button style="
-                                    margin-top:10px;
-                                    background:#ef4444;
-                                    color:white;
-                                    padding:8px 14px;
-                                    border:none;
-                                    border-radius:8px;
-                                    cursor:pointer;">
-                                    Request Absence
-                                </button>
-                            </form>
+                        {% if s.service.start_date > today %}
 
-                        {% elif s.absence_requested and not s.absence_approved %}
-                            <p style="color:orange;font-weight:600;margin-top:8px;">
-                                Absence Requested (Waiting for approval)
-                            </p>
+                            {% if not s.absence_requested %}
+                                <form method="post" action="{% url 'request_absence' s.id %}">
+                                    {% csrf_token %}
+                                    <button style="
+                                        margin-top:10px;
+                                        background:#ef4444;
+                                        color:white;
+                                        padding:8px 14px;
+                                        border:none;
+                                        border-radius:8px;
+                                        cursor:pointer;">
+                                        Request Absence
+                                    </button>
+                                </form>
 
-                        {% elif s.absence_approved %}
-                            <p style="color:red;font-weight:600;margin-top:8px;">
-                                Absence Approved
+                            {% elif s.absence_requested and not s.absence_approved %}
+                                <p style="color:orange;font-weight:600;margin-top:8px;">
+                                    Absence Requested (Waiting for approval)
+                                </p>
+
+                            {% elif s.absence_approved %}
+                                <p style="color:red;font-weight:600;margin-top:8px;">
+                                    Absence Approved
+                                </p>
+
+                            {% endif %}
+
+                        {% else %}
+                            <p style="color:gray;font-weight:600;margin-top:8px;">
+                                Absence request closed
                             </p>
                         {% endif %}
 
                     {% endif %}
-
-                    <a href="{% url 'volunteer_available_services' %}" class="view-btn">
-                        View Details →
-                    </a>
 
                 </div>
                 {% endfor %}

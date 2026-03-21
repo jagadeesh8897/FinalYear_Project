@@ -206,6 +206,7 @@ def volunteer_dashboard_page(request):
             "upcoming_services": upcoming_services,
             "overall_attendance": overall_attendance,
             "active_page": "dashboard",
+            "today": today,
         }
     )
 
@@ -1043,23 +1044,39 @@ def volunteer_apply_service(request, service_id):
     )
 
     return redirect("volunteer_available_services")
-
+from django.db.models import Avg
 @login_required
 def organization_view_applicants(request, service_id):
+    volunteer = get_object_or_404(VolunteerProfile, id=volunteer_id)
 
     service = get_object_or_404(Service, id=service_id)
 
     # All applications for this service
     applications = Application.objects.filter(service=service)
 
-    selected_apps = applications.filter(status="SELECTED")
-    rejected_apps = applications.filter(status="REJECTED")
-    waitlist_apps = applications.filter(status="WAITLIST")
-    applied_apps = applications.filter(status="APPLIED")
-    selected_count = Application.objects.filter(
+    selected_apps = Application.objects.filter(
+    service=service,
+    status="SELECTED"
+)
+
+    rejected_apps = Application.objects.filter(
         service=service,
-        status="SELECTED"
-    ).count()
+        status="REJECTED"
+    )
+
+    waitlist_apps = Application.objects.filter(
+        service=service,
+        status="WAITLIST"
+    )
+
+    applied_apps = Application.objects.filter(
+        service=service,
+        status="APPLIED"
+)
+    selected_count = Application.objects.filter(
+    service=service,
+    status__in=["SELECTED", "COMPLETED"]
+).count()
 
     remaining_seats = service.max_volunteers - selected_count
 
@@ -1120,7 +1137,7 @@ def organization_view_applicants(request, service_id):
         date=today
     ).count()
 
-    attendance_completed_today = selected_count == today_attendance_count
+    attendance_completed_today = selected_count <= today_attendance_count
 
     # Final condition
     rating_open = is_last_day and attendance_completed_today
@@ -1970,6 +1987,10 @@ def approve_volunteer(request, app_id):
         )
 
     return redirect("org_view_applicants", service_id=service.id)
+from django.utils.timezone import now
+from django.shortcuts import get_object_or_404, redirect
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def request_absence(request, app_id):
@@ -1981,11 +2002,23 @@ def request_absence(request, app_id):
         status="SELECTED"
     )
 
+    today = now().date()
+
+    # ❌ BLOCK if event already started
+    if application.service.start_date <= today:
+        return HttpResponse("❌ Absence request closed. Event already started.")
+
+    # ❌ BLOCK if already requested
+    if application.absence_requested:
+        return HttpResponse("⚠️ You already requested absence.")
+
+    # ✅ ALLOW
     application.absence_requested = True
     application.save()
-    print("ABSENCE SAVED FOR:", application.id, application.absence_requested)
 
     return redirect("volunteer_dashboard")
+
+from django.db import transaction
 
 @login_required
 def approve_absence(request, app_id):
@@ -1996,32 +2029,31 @@ def approve_absence(request, app_id):
     if service.organization.user != request.user:
         return redirect("organization_dashboard")
 
-    # STEP 1 — Remove selected volunteer
-    application.absence_approved = True
+    # STEP 1 — mark absent
     application.status = "ABSENT"
+    application.absence_approved = True
     application.save()
-    application.refresh_from_db()
-    print("AFTER:", application.id, application.status)
 
-    # STEP 2 — Count current selected volunteers
+    # STEP 2 — auto promote from waitlist
     selected_count = Application.objects.filter(
         service=service,
         status="SELECTED"
     ).count()
 
-    required = service.max_volunteers
+    while selected_count < service.max_volunteers:
 
-    # STEP 3 — If seats available, promote
-    if selected_count < required:
-
-        next_waitlisted = Application.objects.filter(
+        next_wait = Application.objects.filter(
             service=service,
             status="WAITLIST"
-        ).first()
+        ).order_by("id").first()
 
-        if next_waitlisted:
-            next_waitlisted.status = "SELECTED"
-            next_waitlisted.save()
+        if not next_wait:
+            break
+
+        next_wait.status = "SELECTED"
+        next_wait.save()
+
+        selected_count += 1
 
     return redirect(
         reverse("org_view_applicants", args=[service.id]) + "?tab=selected"
