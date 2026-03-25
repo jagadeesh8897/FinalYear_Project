@@ -1047,7 +1047,7 @@ def volunteer_apply_service(request, service_id):
 from django.db.models import Avg
 @login_required
 def organization_view_applicants(request, service_id):
-    volunteer = get_object_or_404(VolunteerProfile, id=volunteer_id)
+    
 
     service = get_object_or_404(Service, id=service_id)
 
