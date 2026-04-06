@@ -235,10 +235,15 @@
     <!-- ✅ ABSENCE (NEW FEATURE KEPT) -->
     <td>
         {% if app.absence_requested and not app.absence_approved %}
-            <form method="post" action="{% url 'approve_absence' app.id %}">
-                {% csrf_token %}
-                <button style="background:red;">Approve Absence</button>
-            </form>
+            <button
+    type="submit"
+    name="approve_absence_id"
+    value="{{ app.id }}"
+    formaction="{% url 'approve_absence' app.id %}"
+    formmethod="post"
+    style="background:red;">
+    Approve Absence
+</button>
 
         {% elif app.absence_approved %}
             <span style="color:red;">Absence Approved</span>

@@ -183,7 +183,7 @@ tbody tr:hover{
 <tr data-year="{{ v.year }}" data-branch="{{ v.department }}">
     <td>
         <div class="org">
-            <a href="{% url 'public_volunteer_profile' v.id %}"> {{ v.student_id }}</a>
+            <a href="{% url 'view_volunteer_profile' v.id %}"> {{ v.student_id }}</a>
         </div></td>
 <td>{{ v.full_name }}</td>
 <td>{{ v.user.email }}</td>

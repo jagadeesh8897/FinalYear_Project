@@ -153,17 +153,19 @@ def volunteer_dashboard_page(request):
                 event_days = (effective_end - service.start_date).days + 1
                 total_days += event_days
 
-        present_days = Attendance.objects.filter(
-            application=app,
+        total_present = Attendance.objects.filter(
+            application__volunteer=profile,
             is_present=True
         ).count()
 
-        total_present += present_days
+        total_marked = Attendance.objects.filter(
+            application__volunteer=profile
+        ).count()
 
-    overall_attendance = (
-        round((total_present / total_days) * 100, 2)
-        if total_days > 0 else 0
-    )
+        overall_attendance = (
+            round((total_present / total_marked) * 100, 2)
+            if total_marked > 0 else 0
+        )
     ratings = Application.objects.filter(
         volunteer=profile,
         rating__gt=0  # only real ratings
@@ -1422,16 +1424,13 @@ def volunteer_attendance(request):
 
         service = app.service
 
-        total_days = (
-            (service.end_date - service.start_date).days + 1
-            if service.start_date and service.end_date
-            else 0
-        )
-
+        total_days = Attendance.objects.filter(
+            application=app
+        ).values('date').distinct().count()
         present_days = Attendance.objects.filter(
             application=app,
             is_present=True
-        ).count()
+        ).values('date').distinct().count()
 
         percentage = (
             round((present_days / total_days) * 100, 2)
@@ -1830,8 +1829,6 @@ def edit_organization_profile(request):
 @login_required
 def view_volunteer_profile(request, volunteer_id):
 
-    if request.user.role != "ORGANIZATION":
-        return redirect("login")
 
     volunteer = get_object_or_404(
         VolunteerProfile,
@@ -1839,9 +1836,12 @@ def view_volunteer_profile(request, volunteer_id):
     )
 
     # Previous completed events count
+    today = timezone.now().date()
+
     completed_count = Application.objects.filter(
         volunteer=volunteer,
-        status="COMPLETED"
+        status="SELECTED",
+        service__end_date__lt=today
     ).count()
 
     # Attendance percentage
