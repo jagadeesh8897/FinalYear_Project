@@ -141,31 +141,21 @@ def volunteer_dashboard_page(request):
 
     today = timezone.now().date()
 
-    for app in selected_apps:
-        service = app.service
+    # ================= ATTENDANCE =================
 
-        if service.start_date and service.end_date:
+    total_present = Attendance.objects.filter(
+        application__volunteer=profile,
+        is_present=True
+    ).values('date').distinct().count()
 
+    total_marked = Attendance.objects.filter(
+        application__volunteer=profile
+    ).values('date').distinct().count()
 
-            effective_end = min(service.end_date, today)
-
-            if effective_end >= service.start_date:
-                event_days = (effective_end - service.start_date).days + 1
-                total_days += event_days
-
-        total_present = Attendance.objects.filter(
-            application__volunteer=profile,
-            is_present=True
-        ).count()
-
-        total_marked = Attendance.objects.filter(
-            application__volunteer=profile
-        ).count()
-
-        overall_attendance = (
-            round((total_present / total_marked) * 100, 2)
-            if total_marked > 0 else 0
-        )
+    overall_attendance = (
+        round((total_present / total_marked) * 100, 2)
+        if total_marked > 0 else 0
+    )
     ratings = Application.objects.filter(
         volunteer=profile,
         rating__gt=0  # only real ratings
