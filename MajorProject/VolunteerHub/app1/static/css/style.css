@@ -107,7 +107,21 @@ body {
     transform:translateX(-4px);
     box-shadow:0 6px 18px rgba(0,0,0,0.25);
 }
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
+.logo-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}.logo-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+}
 .back-btn .arrow{
     font-size:16px;
 }
